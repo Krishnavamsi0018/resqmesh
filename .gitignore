@@ -1,0 +1,30 @@
+# Gradle / Android
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.kotlin/
+
+# Node
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Experiment scratch output (commit only curated results)
+experiments/scratch/
