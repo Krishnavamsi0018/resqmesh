@@ -1,11 +1,11 @@
-name: mesh-core
+name: android
 
 on:
   push:
   pull_request:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew :mesh-core:test
+      # The runner image ships the Android SDK (ANDROID_HOME); AGP fetches a missing platform itself.
+      - run: ./gradlew :mesh-core:test :app:testDebugUnitTest :app:assembleDebug

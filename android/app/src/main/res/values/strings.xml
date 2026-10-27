@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English. Hindi (values-hi) and Kannada (values-kn) arrive with the SOS screens in week 6. -->
+<resources>
+    <string name="app_name">ResQMesh</string>
+
+    <string name="notification_channel_mesh">Relaying</string>
+    <string name="notification_channel_mesh_description">Shows while ResQMesh passes SOS alerts between nearby phones</string>
+    <string name="notification_relaying_title">ResQMesh is relaying</string>
+    <string name="notification_relaying_none">Looking for nearby phones</string>
+    <plurals name="notification_relaying_some">
+        <item quantity="one">Linked to %1$d phone</item>
+        <item quantity="other">Linked to %1$d phones</item>
+    </plurals>
+    <string name="notification_action_stop">Stop</string>
+
+    <string name="test_title">Mesh test (week 2)</string>
+    <string name="test_node_id">This phone: %1$s</string>
+    <string name="test_start">Start relaying</string>
+    <string name="test_stop">Stop relaying</string>
+    <string name="test_send_flood">Send test SOS: Flood</string>
+    <string name="test_send_medical">Send test SOS: Medical</string>
+    <string name="test_peers">Nearby phones · linked: %1$d</string>
+    <string name="test_no_peers">None yet. Start relaying on two phones.</string>
+    <string name="test_log">Packet log</string>
+    <string name="test_clear_log">Clear</string>
+    <string name="test_counts">Sent %1$d · accepted %2$d · duplicates %3$d · rejected %4$d</string>
+
+    <string name="perm_title">ResQMesh needs a few permissions</string>
+    <string name="perm_body">Nearby devices and location let phones find each other without internet. Notifications show when relaying is on.</string>
+    <string name="perm_grant">Allow</string>
+    <string name="perm_settings">Open app settings</string>
+    <string name="warn_location_off">Turn on Location: older Android versions need it to find nearby phones.</string>
+    <string name="warn_battery">Battery optimisation may stop relaying when the screen is off.</string>
+    <string name="warn_battery_fix">Allow background</string>
+</resources>

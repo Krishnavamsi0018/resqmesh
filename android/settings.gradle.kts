@@ -17,4 +17,5 @@ dependencyResolutionManagement {
 rootProject.name = "resqmesh"
 
 include(":mesh-core")
-// :app joins in week 2, :simulator in week 5.
+include(":app")
+// :simulator joins in week 5.

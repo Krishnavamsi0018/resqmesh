@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme only; everything on screen is drawn by Compose (ui/theme). -->
+    <style name="Theme.ResQMesh" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
