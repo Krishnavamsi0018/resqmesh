@@ -89,7 +89,7 @@ fun MeshTestScreen(graph: AppGraph) {
 }
 
 @Composable
-private fun PermissionGate(onAllow: () -> Unit, onOpenSettings: () -> Unit) {
+internal fun PermissionGate(onAllow: () -> Unit, onOpenSettings: () -> Unit) {
     Column(
         Modifier.safeDrawingPadding().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),

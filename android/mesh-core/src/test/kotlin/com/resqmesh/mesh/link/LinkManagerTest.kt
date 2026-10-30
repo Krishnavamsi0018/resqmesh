@@ -73,13 +73,17 @@ class LinkManagerTest {
     fun `a connection that never reports back times out and is retried`() {
         radio.inRange(a, b)
         radio.dropQueued()
-        radio.advance(30_000)
+        radio.advance(14_999)
+        assertTrue(a.notes.isEmpty(), "too early to give up: ${a.notes}")
 
+        radio.advance(1)
         assertTrue(a.notes.any { it.startsWith("Link attempt with ${b.id.short} timed out") }, a.notes.toString())
         radio.run()
         radio.advance(2_000)
         radio.run()
         assertEquals(1, radio.connectionCount())
+        // The lower ID's retry got there first: b never had to fall back and ask itself.
+        assertEquals(0, b.requests)
     }
 
     @Test
@@ -218,6 +222,52 @@ class LinkManagerTest {
         radio.run()
         assertEquals(1, radio.connectionCount())
         assertEquals(listOf(b.id, b.id), a.linkedTo)
+    }
+
+    @Test
+    fun `three silent timeouts in a row with one phone report it as stuck`() {
+        radio.inRange(a, b)
+        // Like B and C in the 0.3.3 test: every request vanishes without an answer.
+        repeat(3) {
+            radio.dropQueued()
+            radio.advance(15_000)
+            radio.dropQueued()
+            a.manager.nextWakeAt()?.let { radio.advance(it - radio.clock.now) }
+        }
+
+        assertEquals(listOf(b.id), a.stuckWith)
+    }
+
+    @Test
+    fun `restarting discovery keeps links and forgets phones that are only seen`() {
+        val c = radio.phone("E000000000000000")
+        radio.inRange(a, b)
+        radio.run()
+        a.manager.setAllowOnly(setOf(b.id))
+        a.manager.onFound(c.endpointId, c.name)
+
+        a.manager.onDiscoveryRestarted()
+
+        assertEquals(listOf(b.endpointId), a.manager.peers().map { it.endpointId })
+        assertEquals(setOf(b.id), a.manager.linkedNodes())
+    }
+
+    @Test
+    fun `an answer from Nearby, even a failure, resets the stuck count`() {
+        radio.inRange(a, b)
+        repeat(2) {
+            radio.dropQueued()
+            radio.advance(15_000)
+            a.manager.nextWakeAt()?.let { radio.advance(it - radio.clock.now) }
+        }
+        // The third attempt gets an answer: the radio is working, only this request failed.
+        radio.dropQueued()
+        a.manager.onRequestFailed(b.endpointId, 8012)
+        a.manager.nextWakeAt()?.let { radio.advance(it - radio.clock.now) }
+        radio.dropQueued()
+        radio.advance(15_000)
+
+        assertTrue(a.stuckWith.isEmpty())
     }
 
     @Test

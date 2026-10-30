@@ -1,8 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- English. Hindi (values-hi) and Kannada (values-kn) arrive with the SOS screens in week 6. -->
+<!-- English. Hindi is in values-hi and Kannada in values-kn: drafts from design 3.7, to be checked by a native speaker.
+     The developer test console's strings are in strings_dev.xml, English only. -->
 <resources>
-    <string name="app_name">ResQMesh</string>
+    <string name="app_name" translatable="false">ResQMesh</string>
 
+    <!-- A1: shown before a language is picked, so it carries all three. -->
+    <string name="language_title" translatable="false">Choose language · भाषा चुनें · ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_status">My SOS</string>
+    <string name="action_language">Change language</string>
+    <string name="tab_network">Network</string>
+
+    <!-- Categories (design 3.7). -->
+    <string name="cat_general">Emergency</string>
+    <string name="cat_medical">Medical</string>
+    <string name="cat_flood">Flood</string>
+    <string name="cat_fire">Fire</string>
+    <string name="cat_trapped">Trapped</string>
+    <string name="cat_water">Need water</string>
+    <!-- What TalkBack reads for a tile, e.g. "Flood, send SOS". -->
+    <string name="tile_spoken">%1$s, send SOS</string>
+
+    <!-- A4 Home. -->
+    <string name="home_tap_for_help">Tap for help</string>
+    <string name="mesh_searching">Looking for nearby phones</string>
+    <plurals name="mesh_nearby">
+        <item quantity="one">%1$d phone nearby</item>
+        <item quantity="other">%1$d phones nearby</item>
+    </plurals>
+    <string name="mesh_off">Relay is off</string>
+    <string name="home_active">Your SOS is active. Tap to see where it is.</string>
+    <string name="home_location_off">Turn on Location so your SOS says where you are.</string>
+
+    <!-- A5 Countdown. -->
+    <string name="countdown_hint">Your SOS is sent when the count reaches 0.</string>
+    <string name="countdown_sending">Sending…</string>
+    <string name="countdown_people">People who need help</string>
+    <string name="action_send_now">Send now</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- A6 My SOS status. -->
+    <string name="status_title">Your SOS: %1$s</string>
+    <string name="status_sent_at">Sent at %1$s</string>
+    <string name="step_waiting">Looking for nearby phones</string>
+    <string name="step_waiting_hint">Your SOS stays on this phone and goes to every phone that comes near.</string>
+    <string name="step_relayed_pending">Passed to other phones</string>
+    <plurals name="step_relayed">
+        <item quantity="one">Passed to %1$d phone</item>
+        <item quantity="other">Passed to %1$d phones</item>
+    </plurals>
+    <string name="step_notified">Rescue team informed</string>
+    <string name="step_acked">Help is coming</string>
+    <string name="status_location">Location sent, accurate to %1$d m</string>
+    <string name="status_location_no_accuracy">Location sent</string>
+    <string name="status_location_unknown">Location could not be found</string>
+    <string name="ack_team_dispatched">Team is on the way</string>
+    <string name="ack_stay_put">Stay where you are</string>
+    <string name="ack_move_higher">Move to higher ground</string>
+    <string name="action_safe">I\'m safe now</string>
+    <string name="action_mistake">Sent by mistake</string>
+    <string name="confirm_safe_title">Tell rescuers you are safe?</string>
+    <string name="confirm_mistake_title">Cancel this SOS?</string>
+    <string name="confirm_cancel_body">This closes your SOS on every phone it reaches.</string>
+    <string name="confirm_yes">Yes</string>
+    <string name="confirm_no">No</string>
+    <string name="closed_safe">You told rescuers you are safe</string>
+    <string name="closed_mistake">SOS cancelled</string>
+    <string name="closed_expired">SOS expired after 12 hours</string>
+    <string name="action_back_home">Back to home</string>
+
+    <!-- Relay notification. It follows the phone's language, not the app's. -->
     <string name="notification_channel_mesh">Relaying</string>
     <string name="notification_channel_mesh_description">Shows while ResQMesh passes SOS alerts between nearby phones</string>
     <string name="notification_relaying_title">ResQMesh is relaying</string>
@@ -13,33 +81,12 @@
     </plurals>
     <string name="notification_action_stop">Stop</string>
 
-    <string name="test_title">Mesh test (multi-hop)</string>
-    <string name="test_node_id">This phone: %1$s</string>
-    <string name="test_start">Start relaying</string>
-    <string name="test_stop">Stop relaying</string>
-    <string name="test_send_flood">Send test SOS: Flood</string>
-    <string name="test_send_medical">Send test SOS: Medical</string>
-    <string name="test_peers">Nearby phones · linked: %1$d</string>
-    <string name="test_no_peers">None yet. Start relaying on two phones.</string>
-    <string name="test_log">Packet log</string>
-    <string name="test_clear_log">Clear</string>
-    <string name="test_counts">Sent %1$d · accepted %2$d · forwarded %3$d · duplicates %4$d · rejected %5$d</string>
-    <plurals name="test_held">
-        <item quantity="one">Holding %1$d packet for phones that link later</item>
-        <item quantity="other">Holding %1$d packets for phones that link later</item>
-    </plurals>
-    <string name="test_chain_title">Chain test mode</string>
-    <string name="test_chain_body">Link only to ticked phones, so phones on one table form a line A–B–C–D. Tick each pair on both phones.</string>
-    <string name="test_peer_linked">linked</string>
-    <string name="test_peer_seen">seen</string>
-    <string name="test_peer_connecting">connecting…</string>
-    <string name="test_peer_not_ticked">not ticked</string>
-
+    <!-- A3 Permissions and system warnings. -->
     <string name="perm_title">ResQMesh needs a few permissions</string>
-    <string name="perm_body">Nearby devices and location let phones find each other without internet. Notifications show when relaying is on.</string>
+    <string name="perm_body">Nearby devices and location let phones find each other without internet and tell rescuers where you are. Notifications show when relaying is on.</string>
     <string name="perm_grant">Allow</string>
-    <string name="perm_settings">Open app settings</string>
-    <string name="warn_location_off">Turn on Location: older Android versions need it to find nearby phones.</string>
+    <string name="perm_settings">Open settings</string>
+    <string name="warn_location_off">Turn on Location: phones need it to find each other, and your SOS to say where you are.</string>
     <string name="warn_battery">Battery optimisation may stop relaying when the screen is off.</string>
     <string name="warn_battery_fix">Allow background</string>
 </resources>

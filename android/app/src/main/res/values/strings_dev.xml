@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The mesh test console (screens A8/A10, Network tab): a developer tool, English only. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="test_title">Mesh test (multi-hop)</string>
+    <string name="test_node_id">This phone: %1$s</string>
+    <string name="test_start">Start relaying</string>
+    <string name="test_stop">Stop relaying</string>
+    <string name="test_send_flood">Send test SOS: Flood</string>
+    <string name="test_send_medical">Send test SOS: Medical</string>
+    <string name="test_peers">Nearby phones · linked: %1$d</string>
+    <string name="test_no_peers">None yet. Start relaying on two phones.</string>
+    <string name="test_log">Packet log</string>
+    <string name="test_clear_log">Clear</string>
+    <string name="test_counts">Sent %1$d · accepted %2$d · forwarded %3$d · duplicates %4$d · rejected %5$d</string>
+    <plurals name="test_held">
+        <item quantity="one">Holding %1$d packet for phones that link later</item>
+        <item quantity="other">Holding %1$d packets for phones that link later</item>
+    </plurals>
+    <string name="test_chain_title">Chain test mode</string>
+    <string name="test_chain_body">Link only to ticked phones, so phones on one table form a line A–B–C–D. Tick each pair on both phones.</string>
+    <string name="test_peer_linked">linked</string>
+    <string name="test_peer_seen">seen</string>
+    <string name="test_peer_connecting">connecting…</string>
+    <string name="test_peer_not_ticked">not ticked</string>
+</resources>

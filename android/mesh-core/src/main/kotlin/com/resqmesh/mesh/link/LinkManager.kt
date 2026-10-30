@@ -29,6 +29,12 @@ interface LinkEvents {
     fun onPeersChanged() {}
 
     fun onNote(text: String) {}
+
+    /**
+     * Attempts with [node] timed out [LinkManager.STUCK_AFTER_TIMEOUTS] times in a row with no
+     * answer at all. In the 0.3.3 test only restarting Nearby got such a pair talking again.
+     */
+    fun onStuck(node: NodeId) {}
 }
 
 /**
@@ -38,7 +44,10 @@ interface LinkEvents {
  * A connection counts as in progress from the moment either side starts it until its result
  * arrives, so this phone never asks again while one is pending. "Already connecting" from Nearby
  * means wait, not fail. Before this, the three-phone test showed pairs colliding for 35 s or never
- * linking. A connection that never reports back is given up after [connectTimeoutMs].
+ * linking. A connection that never reports back is given up after [connectTimeoutMs]: in the
+ * four-phone test good links came up within seconds and failures came back within 13 s, while
+ * hung attempts held a pair up for the old 30 s. It stays well under the 30 s fallback, so a
+ * retry after a timeout is still the lower-ID phone's turn.
  *
  * Call [tick] at [nextWakeAt] for retries, fallbacks and timeouts. Not thread-safe; main thread only.
  */
@@ -49,7 +58,7 @@ class LinkManager(
     private val commands: (LinkCommand) -> Unit,
     private val events: LinkEvents,
     private val statusName: (Int) -> String = { "status $it" },
-    private val connectTimeoutMs: Long = 30_000,
+    private val connectTimeoutMs: Long = 15_000,
 ) {
     private class Endpoint(val id: String, val name: EndpointName, val firstSeenAt: Long) {
         var discovered = false
@@ -60,6 +69,9 @@ class LinkManager(
     }
 
     private val endpoints = LinkedHashMap<String, Endpoint>()
+
+    /** Timeouts in a row per phone, cleared by any answer from Nearby about it. */
+    private val silentTimeouts = HashMap<NodeId, Int>()
 
     fun onFound(endpointId: String, name: EndpointName) {
         if (name.nodeId == local) return
@@ -98,6 +110,7 @@ class LinkManager(
         // We already gave this attempt up (chain mode or a timeout): Nearby reports the cancelled
         // request as failed (8007 in the four-phone test), which is neither news nor a reason to back off.
         if (endpoint.state != LinkState.CONNECTING) return
+        silentTimeouts.remove(endpoint.node)
         if (code == STATUS_ALREADY_CONNECTED_TO_ENDPOINT) {
             // A connection with this phone is already being set up, usually one it started. Wait for its result.
             events.onNote("Already connecting to ${endpoint.node.short}, waiting")
@@ -114,6 +127,7 @@ class LinkManager(
 
     fun onResult(endpointId: String, success: Boolean, code: Int) {
         val endpoint = endpoints[endpointId] ?: return
+        silentTimeouts.remove(endpoint.node)
         if (success) {
             endpoint.state = LinkState.LINKED
             endpoint.wakeAt = null
@@ -179,6 +193,13 @@ class LinkManager(
             if (endpoint.state == LinkState.CONNECTING && now - endpoint.connectingSince >= connectTimeoutMs) {
                 commands(LinkCommand.Disconnect(endpoint.id))
                 failed(endpoint, "Link attempt with ${endpoint.node.short} timed out")
+                val silent = (silentTimeouts[endpoint.node] ?: 0) + 1
+                if (silent >= STUCK_AFTER_TIMEOUTS) {
+                    silentTimeouts.remove(endpoint.node)
+                    events.onStuck(endpoint.node)
+                } else {
+                    silentTimeouts[endpoint.node] = silent
+                }
             } else if (endpoint.state == LinkState.SEEN && (endpoint.wakeAt ?: Long.MAX_VALUE) <= now) {
                 endpoint.wakeAt = null
                 evaluate(endpoint)
@@ -208,6 +229,16 @@ class LinkManager(
 
     fun clear() {
         endpoints.clear()
+        silentTimeouts.clear()
+    }
+
+    /**
+     * The app restarted discovery: forget phones that are only seen, since Nearby reports them
+     * again, perhaps under new endpoint IDs. Live links and attempts are kept.
+     */
+    fun onDiscoveryRestarted() {
+        endpoints.values.removeAll { it.state == LinkState.SEEN }
+        events.onPeersChanged()
     }
 
     /** Ends a link or attempt from this side. Nearby tells only the other side, so update our state here. */
@@ -255,5 +286,8 @@ class LinkManager(
     companion object {
         /** Nearby's ConnectionsStatusCodes.STATUS_ALREADY_CONNECTED_TO_ENDPOINT. */
         const val STATUS_ALREADY_CONNECTED_TO_ENDPOINT = 8003
+
+        /** Silent timeouts in a row with one phone before [LinkEvents.onStuck]. */
+        const val STUCK_AFTER_TIMEOUTS = 3
     }
 }

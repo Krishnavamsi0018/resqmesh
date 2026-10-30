@@ -1,6 +1,7 @@
 package com.resqmesh.app.mesh
 
 import com.resqmesh.mesh.link.EndpointName
+import com.resqmesh.mesh.sos.MySos
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +39,14 @@ class MeshState {
     private val _held = MutableStateFlow(0)
     /** Packets kept for phones that link later (store-carry-forward). */
     val held: StateFlow<Int> = _held.asStateFlow()
+
+    private val _mySos = MutableStateFlow<MySos?>(null)
+    /** This phone's latest SOS and how far it has got (F-14); null when there is none to show. */
+    val mySos: StateFlow<MySos?> = _mySos.asStateFlow()
+
+    fun setMySos(sos: MySos?) {
+        _mySos.value = sos
+    }
 
     fun setRunning(running: Boolean) {
         _running.value = running

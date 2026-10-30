@@ -12,8 +12,8 @@ android {
         applicationId = "com.resqmesh.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.2-multihop"
+        versionCode = 7
+        versionName = "0.4.0-sos"
 
         // Public TEST key from shared/test-vectors, so responder acks can be tried before the
         // backend exists. Week 7 replaces it with the real server key.
@@ -28,6 +28,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // The app switches language itself (F-01), so every language must ship in every install.
+    bundle {
+        language {
+            enableSplit = false
+        }
     }
 
     buildTypes {
@@ -51,6 +58,7 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
 

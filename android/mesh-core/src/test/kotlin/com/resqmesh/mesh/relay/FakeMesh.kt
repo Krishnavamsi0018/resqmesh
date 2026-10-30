@@ -31,6 +31,7 @@ class FakeMesh(val clock: FixedClock = FixedClock(Fixtures.NOW)) {
         val delivered = mutableListOf<Delivery>()
         val duplicates = mutableListOf<PacketBody>()
         val dropped = mutableListOf<Pair<DropKind, String>>()
+        val handedOver = mutableListOf<Pair<String, NodeId>>()
         val router = Router(PacketValidator(server.publicKey, clock), this, this, clock, config)
 
         override fun linked(): Set<NodeId> = neighbours.toSet()
@@ -49,6 +50,10 @@ class FakeMesh(val clock: FixedClock = FixedClock(Fixtures.NOW)) {
 
         override fun onDropped(kind: DropKind, detail: String, from: NodeId) {
             dropped += kind to detail
+        }
+
+        override fun onHandedOver(body: PacketBody, to: NodeId) {
+            handedOver += body.id to to
         }
     }
 

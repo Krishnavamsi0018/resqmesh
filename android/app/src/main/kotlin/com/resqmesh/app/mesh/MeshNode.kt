@@ -7,7 +7,9 @@ import com.resqmesh.mesh.crypto.NodeKeys
 import com.resqmesh.mesh.packet.AckBody
 import com.resqmesh.mesh.packet.BodyJson
 import com.resqmesh.mesh.packet.CancelBody
+import com.resqmesh.mesh.packet.CancelReason
 import com.resqmesh.mesh.packet.Category
+import com.resqmesh.mesh.packet.Location
 import com.resqmesh.mesh.packet.Packet
 import com.resqmesh.mesh.packet.PacketBody
 import com.resqmesh.mesh.packet.PacketFactory
@@ -17,12 +19,13 @@ import com.resqmesh.mesh.relay.DropKind
 import com.resqmesh.mesh.relay.Links
 import com.resqmesh.mesh.relay.Router
 import com.resqmesh.mesh.relay.RouterEvents
+import com.resqmesh.mesh.sos.SosTracker
 import java.util.Locale
 
 /**
- * This phone's end of the mesh: sends test SOS packets and runs every incoming byte through the
- * multi-hop [Router] (TTL, duplicate suppression, store-carry-forward), logging what happens.
- * Called on the main thread only.
+ * This phone's end of the mesh: sends the user's SOS (and test ones), runs every incoming byte
+ * through the multi-hop [Router] (TTL, duplicate suppression, store-carry-forward), follows the
+ * user's own SOS with a [SosTracker], and logs what happens. Called on the main thread only.
  */
 class MeshNode(
     keys: NodeKeys,
@@ -49,6 +52,47 @@ class MeshNode(
         clock = clock,
     )
 
+    private val tracker = SosTracker(clock)
+
+    /**
+     * Sends the user's SOS (F-10 to F-13). It goes to every linked phone now, and the Router keeps
+     * offering it to each phone that links later until it expires (F-15).
+     */
+    fun sendSos(category: Category, location: Location?, batteryPercent: Int?, people: Int, lang: String) {
+        val packet = factory.sos(category, location, batteryPercent, people, lang = lang)
+        // Track first, so the hand-overs inside originate() already count.
+        tracker.started(BodyJson.decode(packet.body) as SosBody)
+        val sentTo = router.originate(packet)
+        state.count { it.copy(sent = it.sent + 1) }
+        state.log(LogKind.SENT, "Your SOS $category ${shortId(tracker.current!!.id)} to $sentTo phone(s)")
+        publishSos()
+    }
+
+    /** "I'm safe now" or "sent by mistake" (F-16): a signed cancel follows the SOS through the mesh. */
+    fun cancelSos(reason: CancelReason) {
+        val sos = tracker.current?.takeIf { it.isOpen } ?: return
+        router.originate(factory.cancel(sos.id, reason))
+        tracker.cancelled(reason)
+        state.log(LogKind.SENT, "CANCEL ($reason) of your SOS ${shortId(sos.id)}")
+        publishSos()
+    }
+
+    /** Closes an expired SOS; the status screen calls it as time passes. */
+    fun refreshSos() {
+        if (tracker.expireIfDue()) publishSos()
+    }
+
+    /** Clears a closed SOS from the screens. */
+    fun dismissSos() {
+        tracker.dismiss()
+        publishSos()
+    }
+
+    private fun publishSos() {
+        state.setMySos(tracker.current)
+        state.setHeld(router.heldCount)
+    }
+
     fun sendTestSos(category: Category) {
         val packet = factory.sos(category, location = null, note = "mesh test", test = true)
         val sentTo = router.originate(packet)
@@ -69,6 +113,11 @@ class MeshNode(
     override fun onDelivered(packet: Packet, body: PacketBody, from: NodeId) {
         state.count { it.copy(accepted = it.accepted + 1) }
         state.log(LogKind.ACCEPTED, describe(body, packet, from))
+        if (body is AckBody && tracker.onAck(body)) publishSos()
+    }
+
+    override fun onHandedOver(body: PacketBody, to: NodeId) {
+        if (tracker.onHandedOver(body, to)) publishSos()
     }
 
     override fun onDuplicate(body: PacketBody, from: NodeId) {

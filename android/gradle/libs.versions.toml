@@ -32,6 +32,8 @@ compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
+# Material icons (category and status symbols, design 3.2). 1.7.8 is the last release; it is no longer in the BOM.
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version = "1.7.8" }
 play-services-nearby = { module = "com.google.android.gms:play-services-nearby", version.ref = "play-services-nearby" }
 
 [plugins]

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kannada. Draft: the design 3.7 terms plus Claude's translations of the rest; a native speaker checks before release. -->
+<resources>
+    <string name="tab_home">ಮುಖಪುಟ</string>
+    <string name="tab_status">ನನ್ನ SOS</string>
+    <string name="action_language">ಭಾಷೆ ಬದಲಾಯಿಸಿ</string>
+    <string name="tab_network">ನೆಟ್‌ವರ್ಕ್</string>
+
+    <string name="cat_general">ತುರ್ತು</string>
+    <string name="cat_medical">ವೈದ್ಯಕೀಯ</string>
+    <string name="cat_flood">ಪ್ರವಾಹ</string>
+    <string name="cat_fire">ಬೆಂಕಿ</string>
+    <string name="cat_trapped">ಸಿಲುಕಿದ್ದೇವೆ</string>
+    <string name="cat_water">ನೀರು ಬೇಕು</string>
+    <string name="tile_spoken">%1$s, SOS ಕಳುಹಿಸಿ</string>
+
+    <string name="home_tap_for_help">ಸಹಾಯಕ್ಕಾಗಿ ಒತ್ತಿ</string>
+    <string name="mesh_searching">ಹತ್ತಿರದ ಫೋನ್‌ಗಳಿಗಾಗಿ ಹುಡುಕುತ್ತಿದೆ</string>
+    <plurals name="mesh_nearby">
+        <item quantity="one">%1$d ಫೋನ್ ಹತ್ತಿರದಲ್ಲಿದೆ</item>
+        <item quantity="other">%1$d ಫೋನ್‌ಗಳು ಹತ್ತಿರದಲ್ಲಿವೆ</item>
+    </plurals>
+    <string name="mesh_off">ರಿಲೇ ಆಫ್ ಆಗಿದೆ</string>
+    <string name="home_active">ನಿಮ್ಮ SOS ಸಕ್ರಿಯವಾಗಿದೆ. ಅದು ಎಲ್ಲಿಗೆ ತಲುಪಿದೆ ಎಂದು ನೋಡಲು ಒತ್ತಿ.</string>
+    <string name="home_location_off">ನೀವು ಎಲ್ಲಿದ್ದೀರಿ ಎಂದು ನಿಮ್ಮ SOS ತಿಳಿಸಲು ಲೊಕೇಶನ್ ಆನ್ ಮಾಡಿ.</string>
+
+    <string name="countdown_hint">ಎಣಿಕೆ 0 ತಲುಪಿದಾಗ ನಿಮ್ಮ SOS ಕಳುಹಿಸಲಾಗುತ್ತದೆ.</string>
+    <string name="countdown_sending">ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…</string>
+    <string name="countdown_people">ಎಷ್ಟು ಜನರಿಗೆ ಸಹಾಯ ಬೇಕು</string>
+    <string name="action_send_now">ಈಗಲೇ ಕಳುಹಿಸಿ</string>
+    <string name="action_cancel">ರದ್ದುಮಾಡಿ</string>
+
+    <string name="status_title">ನಿಮ್ಮ SOS: %1$s</string>
+    <string name="status_sent_at">%1$s ಕ್ಕೆ ಕಳುಹಿಸಲಾಗಿದೆ</string>
+    <string name="step_waiting">ಹತ್ತಿರದ ಫೋನ್‌ಗಳಿಗಾಗಿ ಹುಡುಕುತ್ತಿದೆ</string>
+    <string name="step_waiting_hint">ನಿಮ್ಮ SOS ಈ ಫೋನ್‌ನಲ್ಲಿ ಉಳಿಯುತ್ತದೆ ಮತ್ತು ಹತ್ತಿರ ಬರುವ ಪ್ರತಿಯೊಂದು ಫೋನ್‌ಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.</string>
+    <string name="step_relayed_pending">ಇತರ ಫೋನ್‌ಗಳಿಗೆ ತಲುಪಿದೆ</string>
+    <plurals name="step_relayed">
+        <item quantity="one">%1$d ಫೋನ್‌ಗೆ ತಲುಪಿದೆ</item>
+        <item quantity="other">%1$d ಫೋನ್‌ಗಳಿಗೆ ತಲುಪಿದೆ</item>
+    </plurals>
+    <string name="step_notified">ರಕ್ಷಣಾ ತಂಡಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ</string>
+    <string name="step_acked">ಸಹಾಯ ಬರುತ್ತಿದೆ</string>
+    <string name="status_location">ಲೊಕೇಶನ್ ಕಳುಹಿಸಲಾಗಿದೆ, %1$d ಮೀ ವರೆಗೆ ನಿಖರ</string>
+    <string name="status_location_no_accuracy">ಲೊಕೇಶನ್ ಕಳುಹಿಸಲಾಗಿದೆ</string>
+    <string name="status_location_unknown">ಲೊಕೇಶನ್ ಸಿಗಲಿಲ್ಲ</string>
+    <string name="ack_team_dispatched">ತಂಡ ದಾರಿಯಲ್ಲಿದೆ</string>
+    <string name="ack_stay_put">ಇರುವಲ್ಲೇ ಇರಿ</string>
+    <string name="ack_move_higher">ಎತ್ತರದ ಸ್ಥಳಕ್ಕೆ ಹೋಗಿ</string>
+    <string name="action_safe">ನಾನು ಈಗ ಸುರಕ್ಷಿತವಾಗಿದ್ದೇನೆ</string>
+    <string name="action_mistake">ತಪ್ಪಾಗಿ ಕಳುಹಿಸಲಾಗಿದೆ</string>
+    <string name="confirm_safe_title">ನೀವು ಸುರಕ್ಷಿತವಾಗಿದ್ದೀರಿ ಎಂದು ರಕ್ಷಣಾ ತಂಡಕ್ಕೆ ತಿಳಿಸುವುದೇ?</string>
+    <string name="confirm_mistake_title">ಈ SOS ರದ್ದುಮಾಡುವುದೇ?</string>
+    <string name="confirm_cancel_body">ಇದು ನಿಮ್ಮ SOS ತಲುಪುವ ಪ್ರತಿಯೊಂದು ಫೋನ್‌ನಲ್ಲಿ ಅದನ್ನು ಮುಚ್ಚುತ್ತದೆ.</string>
+    <string name="confirm_yes">ಹೌದು</string>
+    <string name="confirm_no">ಇಲ್ಲ</string>
+    <string name="closed_safe">ನೀವು ಸುರಕ್ಷಿತವಾಗಿದ್ದೀರಿ ಎಂದು ರಕ್ಷಣಾ ತಂಡಕ್ಕೆ ತಿಳಿಸಿದ್ದೀರಿ</string>
+    <string name="closed_mistake">SOS ರದ್ದುಮಾಡಲಾಗಿದೆ</string>
+    <string name="closed_expired">12 ಗಂಟೆಗಳ ನಂತರ SOS ಅವಧಿ ಮುಗಿದಿದೆ</string>
+    <string name="action_back_home">ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ</string>
+
+    <string name="notification_channel_mesh">ರಿಲೇ</string>
+    <string name="notification_channel_mesh_description">ResQMesh ಹತ್ತಿರದ ಫೋನ್‌ಗಳ ನಡುವೆ SOS ಕಳುಹಿಸುವಾಗ ತೋರಿಸುತ್ತದೆ</string>
+    <string name="notification_relaying_title">ResQMesh ರಿಲೇ ಮಾಡುತ್ತಿದೆ</string>
+    <string name="notification_relaying_none">ಹತ್ತಿರದ ಫೋನ್‌ಗಳಿಗಾಗಿ ಹುಡುಕುತ್ತಿದೆ</string>
+    <plurals name="notification_relaying_some">
+        <item quantity="one">%1$d ಫೋನ್‌ಗೆ ಸಂಪರ್ಕಗೊಂಡಿದೆ</item>
+        <item quantity="other">%1$d ಫೋನ್‌ಗಳಿಗೆ ಸಂಪರ್ಕಗೊಂಡಿದೆ</item>
+    </plurals>
+    <string name="notification_action_stop">ನಿಲ್ಲಿಸಿ</string>
+
+    <string name="perm_title">ResQMesh ಗೆ ಕೆಲವು ಅನುಮತಿಗಳು ಬೇಕು</string>
+    <string name="perm_body">ಹತ್ತಿರದ ಸಾಧನಗಳು ಮತ್ತು ಲೊಕೇಶನ್ ಅನುಮತಿಯಿಂದ ಫೋನ್‌ಗಳು ಇಂಟರ್ನೆಟ್ ಇಲ್ಲದೆ ಒಂದನ್ನೊಂದು ಹುಡುಕುತ್ತವೆ ಮತ್ತು ನೀವು ಎಲ್ಲಿದ್ದೀರಿ ಎಂದು ರಕ್ಷಣಾ ತಂಡಕ್ಕೆ ತಿಳಿಸುತ್ತವೆ. ರಿಲೇ ಆನ್ ಆಗಿರುವಾಗ ಅಧಿಸೂಚನೆ ತೋರಿಸುತ್ತದೆ.</string>
+    <string name="perm_grant">ಅನುಮತಿಸಿ</string>
+    <string name="perm_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ</string>
+    <string name="warn_location_off">ಲೊಕೇಶನ್ ಆನ್ ಮಾಡಿ: ಫೋನ್‌ಗಳು ಒಂದನ್ನೊಂದು ಹುಡುಕಲು ಮತ್ತು ನಿಮ್ಮ SOS ನೀವು ಎಲ್ಲಿದ್ದೀರಿ ಎಂದು ತಿಳಿಸಲು ಇದು ಬೇಕು.</string>
+    <string name="warn_battery">ಸ್ಕ್ರೀನ್ ಆಫ್ ಆದಾಗ ಬ್ಯಾಟರಿ ಆಪ್ಟಿಮೈಸೇಶನ್ ರಿಲೇ ನಿಲ್ಲಿಸಬಹುದು.</string>
+    <string name="warn_battery_fix">ಹಿನ್ನೆಲೆಯಲ್ಲಿ ಚಲಿಸಲು ಅನುಮತಿಸಿ</string>
+</resources>

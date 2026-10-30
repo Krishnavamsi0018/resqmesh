@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hindi. Draft: the design 3.7 terms plus Claude's translations of the rest; a native speaker checks before release. -->
+<resources>
+    <string name="tab_home">होम</string>
+    <string name="tab_status">मेरा SOS</string>
+    <string name="action_language">भाषा बदलें</string>
+    <string name="tab_network">नेटवर्क</string>
+
+    <string name="cat_general">आपातकाल</string>
+    <string name="cat_medical">चिकित्सा</string>
+    <string name="cat_flood">बाढ़</string>
+    <string name="cat_fire">आग</string>
+    <string name="cat_trapped">फँसे हुए</string>
+    <string name="cat_water">पानी चाहिए</string>
+    <string name="tile_spoken">%1$s, SOS भेजें</string>
+
+    <string name="home_tap_for_help">मदद के लिए दबाएँ</string>
+    <string name="mesh_searching">आस-पास के फ़ोन खोज रहे हैं</string>
+    <plurals name="mesh_nearby">
+        <item quantity="one">%1$d फ़ोन पास में</item>
+        <item quantity="other">%1$d फ़ोन पास में</item>
+    </plurals>
+    <string name="mesh_off">रिले बंद है</string>
+    <string name="home_active">आपका SOS चालू है। देखने के लिए दबाएँ कि वह कहाँ तक पहुँचा।</string>
+    <string name="home_location_off">लोकेशन चालू करें ताकि आपका SOS बताए कि आप कहाँ हैं।</string>
+
+    <string name="countdown_hint">गिनती 0 होने पर आपका SOS भेजा जाएगा।</string>
+    <string name="countdown_sending">भेजा जा रहा है…</string>
+    <string name="countdown_people">कितने लोगों को मदद चाहिए</string>
+    <string name="action_send_now">अभी भेजें</string>
+    <string name="action_cancel">रद्द करें</string>
+
+    <string name="status_title">आपका SOS: %1$s</string>
+    <string name="status_sent_at">%1$s पर भेजा गया</string>
+    <string name="step_waiting">आस-पास के फ़ोन खोज रहे हैं</string>
+    <string name="step_waiting_hint">आपका SOS इस फ़ोन में रहता है और पास आने वाले हर फ़ोन को भेजा जाता है।</string>
+    <string name="step_relayed_pending">दूसरे फ़ोन तक पहुँचा</string>
+    <plurals name="step_relayed">
+        <item quantity="one">%1$d फ़ोन तक पहुँचा</item>
+        <item quantity="other">%1$d फ़ोन तक पहुँचा</item>
+    </plurals>
+    <string name="step_notified">बचाव दल को सूचना मिल गई</string>
+    <string name="step_acked">मदद आ रही है</string>
+    <string name="status_location">लोकेशन भेजी गई, %1$d मीटर तक सटीक</string>
+    <string name="status_location_no_accuracy">लोकेशन भेजी गई</string>
+    <string name="status_location_unknown">लोकेशन नहीं मिल सकी</string>
+    <string name="ack_team_dispatched">टीम रास्ते में है</string>
+    <string name="ack_stay_put">जहाँ हैं वहीं रहें</string>
+    <string name="ack_move_higher">ऊँची जगह पर जाएँ</string>
+    <string name="action_safe">मैं अब सुरक्षित हूँ</string>
+    <string name="action_mistake">गलती से भेजा</string>
+    <string name="confirm_safe_title">बचाव दल को बताएँ कि आप सुरक्षित हैं?</string>
+    <string name="confirm_mistake_title">यह SOS रद्द करें?</string>
+    <string name="confirm_cancel_body">इससे आपका SOS हर उस फ़ोन पर बंद हो जाएगा जहाँ यह पहुँचेगा।</string>
+    <string name="confirm_yes">हाँ</string>
+    <string name="confirm_no">नहीं</string>
+    <string name="closed_safe">आपने बचाव दल को बताया कि आप सुरक्षित हैं</string>
+    <string name="closed_mistake">SOS रद्द किया गया</string>
+    <string name="closed_expired">12 घंटे बाद SOS की अवधि समाप्त हो गई</string>
+    <string name="action_back_home">होम पर वापस जाएँ</string>
+
+    <string name="notification_channel_mesh">रिले</string>
+    <string name="notification_channel_mesh_description">जब ResQMesh आस-पास के फ़ोन के बीच SOS भेजता है तब दिखता है</string>
+    <string name="notification_relaying_title">ResQMesh रिले कर रहा है</string>
+    <string name="notification_relaying_none">आस-पास के फ़ोन खोज रहे हैं</string>
+    <plurals name="notification_relaying_some">
+        <item quantity="one">%1$d फ़ोन से जुड़ा</item>
+        <item quantity="other">%1$d फ़ोन से जुड़ा</item>
+    </plurals>
+    <string name="notification_action_stop">बंद करें</string>
+
+    <string name="perm_title">ResQMesh को कुछ अनुमतियाँ चाहिए</string>
+    <string name="perm_body">आस-पास के डिवाइस और लोकेशन की अनुमति से फ़ोन बिना इंटरनेट के एक-दूसरे को ढूँढते हैं और बचाव दल को आपकी जगह बताते हैं। रिले चालू होने पर सूचना दिखती है।</string>
+    <string name="perm_grant">अनुमति दें</string>
+    <string name="perm_settings">सेटिंग खोलें</string>
+    <string name="warn_location_off">लोकेशन चालू करें: फ़ोन को एक-दूसरे को ढूँढने और आपके SOS में आपकी जगह बताने के लिए इसकी ज़रूरत है।</string>
+    <string name="warn_battery">बैटरी ऑप्टिमाइज़ेशन स्क्रीन बंद होने पर रिले रोक सकता है।</string>
+    <string name="warn_battery_fix">बैकग्राउंड में चलने दें</string>
+</resources>

@@ -4,13 +4,13 @@ Goal: with no internet, an SOS crosses 3 hops on 4 phones (A → B → C → D),
 
 ## You need
 
-- 4 Android 8.0+ phones with Google Play Services, each with app version **0.3.2-multihop** or later (check it under Settings → Apps → ResQMesh). 0.3.1 fixed the link collisions seen in the first three-phone run, and 0.3.2 fixes those left in the first four-phone run.
+- 4 Android 8.0+ phones with Google Play Services, each with app version **0.3.3-multihop** or later (check it under Settings → Apps → ResQMesh). 0.3.1 fixed the link collisions seen in the first three-phone run, 0.3.2 those left in the first four-phone run, and 0.3.3 gives up on a link attempt Nearby never answers after 15 s instead of 30 s.
 - Labels A, B, C, D on the phones (sticky notes help).
 
 ## Set up the chain
 
 1. On every phone: Airplane mode on, then Bluetooth on and Location on.
-2. Open ResQMesh on every phone and tap **Start relaying**. Note each phone's ID (`This phone: XXXX-XXXX`).
+2. Force stop ResQMesh (Settings → Apps), then open it on every phone and tap **Start relaying**. Use only Force stop: clearing the app's data gives the phone a new ID. Note each phone's ID (`This phone: XXXX-XXXX`).
 3. On every phone, turn on **Chain test mode**. Links drop: nothing is ticked yet.
 4. Tick neighbours, on both phones of each pair:
 
@@ -68,7 +68,7 @@ The retest repeats the whole run. Paired `8012` lines should be rare, and switch
 - A refused link (`8004` because B hadn't ticked A yet) relinked 4 s after the tick.
 - A stalled B–C link was caught the moment a send failed (`Sending to … failed, reconnecting` on both phones at 22:40:25) and was rebuilt.
 
-What's left is slow attempts. Six link attempts got no answer from Nearby and hit the 30 s timeout. As a result, B–C took about 55 s to link, and switching chain mode off took about 45 s to reach a full mesh. Links that did form came up within seconds, and failures came back within 13 s, so a shorter timeout (about 15 s) is the next tuning step.
+What's left is slow attempts. Six link attempts got no answer from Nearby and hit the 30 s timeout. As a result, B–C took about 55 s to link, and switching chain mode off took about 45 s to reach a full mesh. Links that did form came up within seconds, and failures came back within 13 s, so 0.3.3 cuts the timeout to 15 s.
 
 An earlier attempt the same day was blocked by the per-sender limit (5 SOS per 10 min, F-32): the phones had sent many test SOS before the run. **Force stop** the app before a test run, and press each send button once per step.
 

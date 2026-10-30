@@ -50,6 +50,7 @@ class NearbyTransport(
     private var running = false
     private var advertiseFailures = 0
     private var discoverFailures = 0
+    private var lastRadioRestartAt = Long.MIN_VALUE / 2
 
     /** Payloads sent and not yet reported done, by payload ID, so a failed transfer can name its link. */
     private val outgoing = object : LinkedHashMap<Long, String>() {
@@ -77,6 +78,8 @@ class NearbyTransport(
             override fun onNote(text: String) {
                 state.log(LogKind.LINK, text)
             }
+
+            override fun onStuck(node: NodeId) = restartRadio(node)
         },
         statusName = ::statusName,
     )
@@ -145,6 +148,23 @@ class NearbyTransport(
             is LinkCommand.Reject -> client.rejectConnection(endpointId)
             is LinkCommand.Disconnect -> client.disconnectFromEndpoint(endpointId)
         }
+    }
+
+    /**
+     * Nearby stopped answering link requests to [node]. In the 0.3.3 test only Stop and Start got
+     * such a pair linked, so restart advertising and discovery, keeping the links that work.
+     * At most once a minute, so a phone that has really gone stays a few timeouts, not a restart loop.
+     */
+    private fun restartRadio(node: NodeId) {
+        val now = clock.nowMillis()
+        if (now - lastRadioRestartAt < RADIO_RESTART_GAP_MS) return
+        lastRadioRestartAt = now
+        state.log(LogKind.LINK, "No answer from ${node.short} 3 times, restarting discovery")
+        client.stopAdvertising()
+        client.stopDiscovery()
+        manager.onDiscoveryRestarted()
+        startAdvertising()
+        startDiscovery()
     }
 
     /** Runs the manager's next due retry, fallback or timeout, then re-arms for the one after. */
@@ -281,5 +301,6 @@ class NearbyTransport(
         const val TOKEN_DISCOVER = "discover"
         const val TOKEN_TICK = "tick"
         const val MAX_OUTGOING = 1_000
+        const val RADIO_RESTART_GAP_MS = 60_000L
     }
 }

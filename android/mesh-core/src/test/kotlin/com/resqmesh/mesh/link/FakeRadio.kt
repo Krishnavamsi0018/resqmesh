@@ -28,6 +28,7 @@ class FakeRadio(val clock: FixedClock = FixedClock(1_000_000)) {
         val linkedTo = mutableListOf<NodeId>()
         val unlinkedFrom = mutableListOf<NodeId>()
         val notes = mutableListOf<String>()
+        val stuckWith = mutableListOf<NodeId>()
 
         /** Link requests this phone has made. On real Bluetooth, two crossing requests both fail (8012). */
         var requests = 0
@@ -55,6 +56,10 @@ class FakeRadio(val clock: FixedClock = FixedClock(1_000_000)) {
 
         override fun onNote(text: String) {
             notes += text
+        }
+
+        override fun onStuck(node: NodeId) {
+            stuckWith += node
         }
     }
 

@@ -44,6 +44,20 @@ class RouterTest {
     }
 
     @Test
+    fun `the sender hears about each neighbour its SOS reaches, live or on catch-up`() {
+        val (a, b, c) = List(3) { mesh.phone(it + 1) }
+        mesh.chain(a, b)
+        val packet = sos(a)
+
+        a.router.originate(packet)
+        mesh.deliverAll()
+        mesh.link(a, c)
+        mesh.deliverAll()
+
+        assertEquals(listOf(idOf(packet) to b.id, idOf(packet) to c.id), a.handedOver)
+    }
+
+    @Test
     fun `TTL limits how far a packet travels`() {
         val line = List(6) { mesh.phone(it + 1) }
         mesh.chain(*line.toTypedArray())

@@ -37,6 +37,9 @@ interface RouterEvents {
 
     /** Answered a neighbour's request after linking: [sent] packets it was missing. */
     fun onSynced(peer: NodeId, sent: Int) {}
+
+    /** [body] went to [to], live or as a catch-up. The sender's tracker counts these (F-14). */
+    fun onHandedOver(body: PacketBody, to: NodeId) {}
 }
 
 data class RouterConfig(
@@ -175,6 +178,7 @@ class Router(
                 for (entry in wanted) {
                     links.send(from, PacketCodec.encode(entry.outgoing))
                     entry.peersWithIt += from
+                    events.onHandedOver(entry.body, from)
                 }
                 events.onSynced(from, wanted.size)
             }
@@ -188,6 +192,7 @@ class Router(
         for (peer in targets) {
             links.send(peer, bytes)
             entry.peersWithIt += peer
+            events.onHandedOver(entry.body, peer)
         }
         return targets
     }
