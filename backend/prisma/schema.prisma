@@ -1,0 +1,101 @@
+// Server data model (TRD 2.9). Times are epoch milliseconds (BigInt), as in the packets.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model SosAlert {
+  id              String     @id
+  senderPk        String     @map("sender_pk")
+  nodeId          String     @map("node_id")
+  category        String
+  lat             Float?
+  lon             Float?
+  accuracyM       Int?       @map("accuracy_m")
+  fixAgeS         Int?       @map("fix_age_s")
+  people          Int
+  note            String?
+  battery         Int?
+  lang            String
+  isTest          Boolean    @map("is_test")
+  createdAt       BigInt     @map("created_at")
+  expiresAt       BigInt     @map("expires_at")
+  firstReceivedAt BigInt     @map("first_received_at")
+  status          String
+  cancelReason    String?    @map("cancel_reason")
+  cancelledAt     BigInt?    @map("cancelled_at")
+  smsEscalated    Boolean    @map("sms_escalated")
+  envelope        String
+  updatedAt       BigInt     @map("updated_at")
+  sightings       Sighting[]
+
+  @@index([status, createdAt])
+  @@map("sos_alerts")
+}
+
+/// One row per gateway upload of an SOS.
+model Sighting {
+  id            Int      @id @default(autoincrement())
+  sosId         String   @map("sos_id")
+  gatewayNodeId String   @map("gateway_node_id")
+  hops          Int
+  receivedAt    BigInt   @map("received_at")
+  sos           SosAlert @relation(fields: [sosId], references: [id], onDelete: Cascade)
+
+  @@index([sosId])
+  @@map("sightings")
+}
+
+/// A cancel may arrive before its SOS, so it is not tied to the alert row.
+model Cancel {
+  ref       String @id
+  id        String
+  senderPk  String @map("sender_pk")
+  reason    String
+  ts        BigInt
+
+  @@map("cancels")
+}
+
+model Ack {
+  id            String  @id
+  sosId         String  @map("sos_id")
+  kind          String
+  signerPk      String  @map("signer_pk")
+  code          String?
+  message       String?
+  unit          String?
+  uploaded      Boolean?
+  sms           Boolean?
+  gatewayNodeId String? @map("gateway_node_id")
+  operatorId    String? @map("operator_id")
+  createdAt     BigInt  @map("created_at")
+  envelope      String
+
+  @@index([sosId])
+  @@map("acks")
+}
+
+model Device {
+  publicKey    String  @id @map("public_key")
+  nodeId       String  @map("node_id")
+  displayName  String? @map("display_name")
+  phone        String?
+  registeredAt BigInt  @map("registered_at")
+  lastSeenAt   BigInt  @map("last_seen_at")
+
+  @@map("devices")
+}
+
+model Operator {
+  id           String @id
+  email        String @unique
+  passwordHash String @map("password_hash")
+  name         String
+
+  @@map("operators")
+}
