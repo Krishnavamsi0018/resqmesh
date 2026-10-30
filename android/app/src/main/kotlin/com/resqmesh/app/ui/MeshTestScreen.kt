@@ -18,9 +18,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -53,8 +56,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Week-2 test console (a first cut of screens A8 and A10): start relaying, link two phones,
- * send test SOS packets and watch them arrive. The real SOS screens replace it in week 6.
+ * Mesh test console (a first cut of screens A8 and A10): start relaying, link phones (optionally
+ * as a chain), send test SOS packets and watch them hop across. The real SOS screens replace it in week 6.
  */
 @Composable
 fun MeshTestScreen(graph: AppGraph) {
@@ -110,6 +113,9 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
     val peers by graph.state.peers.collectAsStateWithLifecycle()
     val log by graph.state.log.collectAsStateWithLifecycle()
     val counters by graph.state.counters.collectAsStateWithLifecycle()
+    val held by graph.state.held.collectAsStateWithLifecycle()
+    val chainOn by graph.chain.enabled.collectAsStateWithLifecycle()
+    val ticked by graph.chain.ticked.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -158,9 +164,30 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
         }
         item {
             Text(
-                stringResource(R.string.test_counts, counters.sent, counters.accepted, counters.duplicates, counters.rejected),
+                stringResource(
+                    R.string.test_counts,
+                    counters.sent, counters.accepted, counters.forwarded, counters.duplicates, counters.rejected,
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            Text(
+                pluralStringResource(R.plurals.test_held, held, held),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.test_chain_title), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.test_chain_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = chainOn, onCheckedChange = graph::setChainMode)
+            }
         }
         item {
             Text(
@@ -172,7 +199,14 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
         if (peers.isEmpty()) {
             item { Text(stringResource(R.string.test_no_peers), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         } else {
-            items(peers, key = { it.endpointId }) { PeerRow(it) }
+            items(peers, key = { it.endpointId }) { peer ->
+                PeerRow(
+                    peer = peer,
+                    chainOn = chainOn,
+                    ticked = peer.name.nodeId in ticked,
+                    onToggle = { graph.toggleChainPeer(peer.name.nodeId) },
+                )
+            }
         }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
@@ -207,22 +241,26 @@ private fun Warning(text: String, action: String, onAction: () -> Unit) {
 }
 
 @Composable
-private fun PeerRow(peer: Peer) {
+private fun PeerRow(peer: Peer, chainOn: Boolean, ticked: Boolean, onToggle: () -> Unit) {
     val flags = buildList {
         if (peer.name.gateway) add("gateway")
         if (peer.name.smsCapable) add("SMS")
     }.joinToString(", ")
+    val status = when {
+        peer.linked -> stringResource(R.string.test_peer_linked)
+        peer.connecting -> stringResource(R.string.test_peer_connecting)
+        chainOn && !ticked -> stringResource(R.string.test_peer_not_ticked)
+        else -> stringResource(R.string.test_peer_seen)
+    }
     Row(verticalAlignment = Alignment.CenterVertically) {
+        if (chainOn) Checkbox(checked = ticked, onCheckedChange = { onToggle() })
         Text(
             peer.name.nodeId.short,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.width(112.dp),
         )
-        Text(
-            if (peer.linked) "linked" else "seen",
-            color = if (peer.linked) Tokens.StatusNotified else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Text(status, color = if (peer.linked) Tokens.StatusNotified else MaterialTheme.colorScheme.onSurfaceVariant)
         if (flags.isNotEmpty()) Text(" · $flags", color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -231,7 +269,8 @@ private fun PeerRow(peer: Peer) {
 private fun LogRow(entry: LogEntry) {
     val color = when (entry.kind) {
         LogKind.ACCEPTED -> Tokens.StatusNotified
-        LogKind.SENT -> Tokens.StatusRelayed
+        LogKind.SENT, LogKind.SYNCED -> Tokens.StatusRelayed
+        LogKind.FORWARDED -> Tokens.StatusWaiting
         LogKind.REJECTED, LogKind.ERROR -> Tokens.StatusRejected
         LogKind.DUPLICATE -> Tokens.StatusClosed
         LogKind.LINK -> MaterialTheme.colorScheme.onSurfaceVariant

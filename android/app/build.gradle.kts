@@ -12,8 +12,8 @@ android {
         applicationId = "com.resqmesh.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0-week2"
+        versionCode = 5
+        versionName = "0.3.2-multihop"
 
         // Public TEST key from shared/test-vectors, so responder acks can be tried before the
         // backend exists. Week 7 replaces it with the real server key.

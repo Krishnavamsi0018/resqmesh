@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -25,15 +26,17 @@ import kotlinx.coroutines.launch
  * Nearby Connections inside a connectedDevice foreground service with an ongoing notification.
  */
 class MeshService : LifecycleService() {
+    private var relaying = false
+
     override fun onCreate() {
         super.onCreate()
         createChannel()
-        ServiceCompat.startForeground(
-            this,
-            NOTIFICATION_ID,
-            notification(linked = 0),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE else 0,
-        )
+        if (!goForeground()) {
+            stopSelf()
+            return
+        }
+        relaying = true
+        graph.applyChainMode()
         graph.transport.start()
 
         lifecycleScope.launch {
@@ -43,7 +46,7 @@ class MeshService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        if (intent?.action == ACTION_STOP) {
+        if (intent?.action == ACTION_STOP || !relaying) {
             stopSelf()
             return START_NOT_STICKY
         }
@@ -54,6 +57,37 @@ class MeshService : LifecycleService() {
     override fun onDestroy() {
         graph.transport.stop()
         super.onDestroy()
+    }
+
+    /**
+     * Location type too, because Nearby's discovery needs location access, and with the screen off
+     * Android grants it only to a location-type foreground service (the week-2 status 8034 failure).
+     * If Android refuses that (no location permission, or started from the background), fall back
+     * to connected-device only: advertising and existing links still work.
+     */
+    private fun goForeground(): Boolean {
+        val notification = notification(linked = 0)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification)
+            return true
+        }
+        val connected = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+        val withLocation = connected or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+        for (types in listOf(withLocation, connected)) {
+            try {
+                ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, types)
+                if (types == connected) {
+                    graph.state.log(LogKind.ERROR, "Relaying without location access: open the app so phones can be found")
+                }
+                return true
+            } catch (e: SecurityException) {
+                Log.w(TAG, "Foreground service types $types refused", e)
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "Foreground service types $types refused", e)
+            }
+        }
+        graph.state.log(LogKind.ERROR, "Android refused to start relaying in the background: open the app and tap Start")
+        return false
     }
 
     private fun createChannel() {
@@ -92,6 +126,7 @@ class MeshService : LifecycleService() {
     }
 
     companion object {
+        private const val TAG = "MeshService"
         private const val CHANNEL_ID = "mesh"
         private const val NOTIFICATION_ID = 1
         private const val ACTION_STOP = "com.resqmesh.app.action.STOP_MESH"

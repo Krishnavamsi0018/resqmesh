@@ -3,10 +3,12 @@ package com.resqmesh.app
 import android.app.Application
 import android.content.Context
 import com.resqmesh.app.keys.KeyVault
+import com.resqmesh.app.mesh.ChainSettings
 import com.resqmesh.app.mesh.MeshNode
 import com.resqmesh.app.mesh.MeshState
 import com.resqmesh.app.mesh.NearbyTransport
 import com.resqmesh.mesh.Base64Url
+import com.resqmesh.mesh.crypto.NodeId
 import com.resqmesh.mesh.crypto.NodeKeys
 import com.resqmesh.mesh.packet.PacketValidator
 
@@ -30,6 +32,21 @@ class AppGraph(context: Context) {
         state = state,
     )
     val transport = NearbyTransport(context.applicationContext, keys, node, state)
+    val chain = ChainSettings(context)
+
+    fun applyChainMode() {
+        transport.setAllowOnly(chain.allowOnly())
+    }
+
+    fun setChainMode(on: Boolean) {
+        chain.setEnabled(on)
+        applyChainMode()
+    }
+
+    fun toggleChainPeer(peer: NodeId) {
+        chain.toggle(peer)
+        applyChainMode()
+    }
 }
 
 val Context.graph: AppGraph get() = (applicationContext as ResQMeshApp).graph

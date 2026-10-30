@@ -6,13 +6,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-data class Peer(val endpointId: String, val name: EndpointName, val linked: Boolean)
+data class Peer(val endpointId: String, val name: EndpointName, val linked: Boolean, val connecting: Boolean = false)
 
-enum class LogKind { SENT, ACCEPTED, DUPLICATE, REJECTED, LINK, ERROR }
+enum class LogKind { SENT, ACCEPTED, FORWARDED, SYNCED, DUPLICATE, REJECTED, LINK, ERROR }
 
 data class LogEntry(val atMillis: Long, val kind: LogKind, val text: String)
 
-data class Counters(val sent: Int = 0, val accepted: Int = 0, val duplicates: Int = 0, val rejected: Int = 0)
+data class Counters(
+    val sent: Int = 0,
+    val accepted: Int = 0,
+    val forwarded: Int = 0,
+    val duplicates: Int = 0,
+    val rejected: Int = 0,
+)
 
 /** What the test screen and the notification show. Written by the transport and the node. */
 class MeshState {
@@ -29,8 +35,16 @@ class MeshState {
     private val _counters = MutableStateFlow(Counters())
     val counters: StateFlow<Counters> = _counters.asStateFlow()
 
+    private val _held = MutableStateFlow(0)
+    /** Packets kept for phones that link later (store-carry-forward). */
+    val held: StateFlow<Int> = _held.asStateFlow()
+
     fun setRunning(running: Boolean) {
         _running.value = running
+    }
+
+    fun setHeld(count: Int) {
+        _held.value = count
     }
 
     fun setPeers(peers: List<Peer>) {
