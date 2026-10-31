@@ -1,0 +1,26 @@
+# Render Blueprint: one free web service runs the API and hosts the dashboard (decision D2,
+# amended 2026-10-31). The database is Neon. Render asks for the two secrets on first setup.
+services:
+  - type: web
+    name: resqmesh
+    runtime: node
+    plan: free
+    region: singapore # next to the Neon database (ap-southeast-1)
+    branch: main
+    buildCommand: >-
+      cd backend && npm ci --include=dev && npx prisma generate &&
+      cd ../dashboard && npm ci --include=dev && npm run build
+    # Free instances have no pre-deploy step, so migrations run at start; with nothing new they take a second.
+    startCommand: cd backend && npx prisma migrate deploy && node src/server.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false
+      - key: SERVER_KEY_SEED_HEX
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

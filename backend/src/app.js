@@ -1,12 +1,14 @@
 // HTTP API v1 (TRD 2.10). Every body is checked with zod and capped at 1 MB; public endpoints are
 // rate-limited per IP. The dashboard reaches the API through its own origin (Vite proxy in
-// development, a Vercel rewrite in production), so the session cookie is first-party and no CORS
-// is needed.
+// development; in production this server hosts the built dashboard), so the session cookie is
+// first-party and no CORS is needed.
 
 import bcrypt from 'bcryptjs';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { z } from 'zod';
 import { MAX_BATCH, OperatorStatuses, ResponderCodes } from './service.js';
 import { Protocol, toBase64Url } from './packet.js';
@@ -41,10 +43,10 @@ const ListQuery = z.object({
   test: z.enum(['0', '1']).optional(),
 });
 
-export function createApp({ service, store, jwtSecret, secureCookies = false, rateLimits = {} }) {
+export function createApp({ service, store, jwtSecret, secureCookies = false, rateLimits = {}, dashboardDir = null }) {
   const app = express();
   app.disable('x-powered-by');
-  app.set('trust proxy', 1); // Render and Vercel sit in front; req.ip is the client.
+  app.set('trust proxy', 1); // Render's proxy sits in front; req.ip is the client.
   app.use((req, res, next) => {
     res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store' });
     next();
@@ -164,6 +166,25 @@ export function createApp({ service, store, jwtSecret, secureCookies = false, ra
 
   app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
+  // The operator dashboard (dashboard/dist), when built: same origin as the API.
+  if (dashboardDir && existsSync(join(dashboardDir, 'index.html'))) {
+    app.use((req, res, next) => {
+      // OpenStreetMap asks browsers to send a Referer with tile requests.
+      res.set({ 'Content-Security-Policy': DASHBOARD_CSP, 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'DENY' });
+      next();
+    });
+    app.use(
+      express.static(dashboardDir, {
+        index: false,
+        setHeaders: (res, path) => {
+          // Vite puts a content hash in every asset name, so assets never change under one URL.
+          if (/[\\/]assets[\\/]/.test(path)) res.set('Cache-Control', 'public, max-age=31536000, immutable');
+        },
+      }),
+    );
+    app.get('/{*page}', (req, res) => res.sendFile(join(dashboardDir, 'index.html'), { headers: { 'Cache-Control': 'no-cache' } }));
+  }
+
   // Express 5 forwards rejected promises here.
   app.use((err, req, res, next) => {
     if (err instanceof z.ZodError) return res.status(400).json({ error: 'Invalid request', issues: err.issues.slice(0, 5) });
@@ -175,6 +196,19 @@ export function createApp({ service, store, jwtSecret, secureCookies = false, ra
 
   return app;
 }
+
+const DASHBOARD_CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  // Leaflet positions tiles and pins with inline styles.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src https://fonts.gstatic.com",
+  "img-src 'self' data: https://tile.openstreetmap.org",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+].join('; ');
 
 const publicOperator = ({ id, email, name }) => ({ id, email, name });
 

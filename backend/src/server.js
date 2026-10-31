@@ -2,6 +2,7 @@
 
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import bcrypt from 'bcryptjs';
 import { createApp } from './app.js';
 import { serverKeyPair } from './packet.js';
@@ -56,6 +57,8 @@ if (env.OPERATOR_EMAIL && env.OPERATOR_PASSWORD && (await store.countOperators()
 }
 
 const service = createService({ store, serverKeys });
-const app = createApp({ service, store, jwtSecret, secureCookies: production });
+// The dashboard build (cd dashboard && npm run build), served from the same origin when present.
+const dashboardDir = fileURLToPath(new URL('../../dashboard/dist', import.meta.url));
+const app = createApp({ service, store, jwtSecret, secureCookies: production, dashboardDir });
 const port = Number(env.PORT ?? 8080);
-app.listen(port, () => console.log(`ResQMesh API on http://localhost:${port}/api/v1`));
+app.listen(port, () => console.log(`ResQMesh API on http://localhost:${port}/api/v1, dashboard on http://localhost:${port}/`));

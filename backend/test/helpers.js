@@ -36,12 +36,12 @@ export const sos = (fields = {}, options) =>
 export const OPERATOR = { email: 'ops@resqmesh.test', password: 'correct horse battery' };
 
 /** A fresh API on an in-memory store with one operator, and a clock the test controls. */
-export async function setup() {
+export async function setup({ dashboardDir } = {}) {
   const store = new MemoryStore();
   await store.addOperator({ id: 'op-1', email: OPERATOR.email, name: 'Test Operator', passwordHash: await bcrypt.hash(OPERATOR.password, 4) });
   const clock = { now: NOW + 60_000 };
   const service = createService({ store, serverKeys: keys.server, clock: () => clock.now });
-  const app = createApp({ service, store, jwtSecret: 'test-secret', rateLimits: { publicPerMinute: 10_000, loginPerMinute: 10_000 } });
+  const app = createApp({ service, store, jwtSecret: 'test-secret', rateLimits: { publicPerMinute: 10_000, loginPerMinute: 10_000 }, dashboardDir });
   return { app, store, service, clock, http: request(app) };
 }
 

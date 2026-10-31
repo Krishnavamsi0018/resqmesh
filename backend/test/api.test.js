@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { get } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, test } from 'node:test';
 import { decodePacket, fromBase64Url, signEd25519, toBase64Url, validatePacket } from '../src/packet.js';
 import { nodeIdOf, registrationMessage } from '../src/service.js';
@@ -204,8 +207,33 @@ describe('device registration (F-33)', () => {
   });
 });
 
-test('the server key endpoint matches the key the app pins', async () => {
+test('the server key endpoint serves the public half of the signing key', async () => {
   const { http } = await setup();
   const res = await http.get('/api/v1/server-key').expect(200);
-  assert.equal(res.body.publicKey, 'AgvUJ0RrcjQk2A0srTUro982SdDvj6rgyn6yVEOUGyk');
+  assert.equal(res.body.publicKey, toBase64Url(keys.server.publicKey));
+});
+
+describe('dashboard hosting', () => {
+  const dashboardDir = mkdtempSync(join(tmpdir(), 'resqmesh-dashboard-'));
+  mkdirSync(join(dashboardDir, 'assets'));
+  writeFileSync(join(dashboardDir, 'index.html'), '<!doctype html><title>ResQMesh</title>');
+  writeFileSync(join(dashboardDir, 'assets', 'index-abc123.js'), 'console.log(1)');
+
+  test('pages load the app with a strict content policy; assets are cached for good', async () => {
+    const { http } = await setup({ dashboardDir });
+    for (const path of ['/', '/sos/some-deep-link']) {
+      const page = await http.get(path).expect(200);
+      assert.match(page.text, /<title>ResQMesh<\/title>/);
+      assert.match(page.headers['content-security-policy'], /script-src 'self'/);
+      assert.equal(page.headers['cache-control'], 'no-cache');
+    }
+    const asset = await http.get('/assets/index-abc123.js').expect(200);
+    assert.match(asset.headers['cache-control'], /immutable/);
+  });
+
+  test('unknown API paths still answer JSON, not the dashboard', async () => {
+    const { http } = await setup({ dashboardDir });
+    const res = await http.get('/api/v1/nothing-here').expect(404);
+    assert.deepEqual(res.body, { error: 'Not found' });
+  });
 });
