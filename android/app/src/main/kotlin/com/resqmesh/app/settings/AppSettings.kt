@@ -2,6 +2,7 @@ package com.resqmesh.app.settings
 
 import android.content.Context
 import androidx.core.content.edit
+import com.resqmesh.app.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,16 @@ class AppSettings(context: Context) {
         _language.value = language
     }
 
+    private val _serverUrl = MutableStateFlow(prefs.getString(KEY_SERVER_URL, null) ?: BuildConfig.API_BASE_URL)
+    /** The backend a gateway uploads to (F-05 developer option). Empty: this phone is never a gateway. */
+    val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
+
+    fun setServerUrl(url: String) {
+        val clean = url.trim().trimEnd('/')
+        prefs.edit { putString(KEY_SERVER_URL, clean) }
+        _serverUrl.value = clean
+    }
+
     /** Shows the language screen again (F-01: change it any time). */
     fun chooseLanguageAgain() {
         prefs.edit { remove(KEY_LANGUAGE) }
@@ -40,5 +51,6 @@ class AppSettings(context: Context) {
     private companion object {
         const val PREFS = "resqmesh_settings"
         const val KEY_LANGUAGE = "language"
+        const val KEY_SERVER_URL = "server_url"
     }
 }

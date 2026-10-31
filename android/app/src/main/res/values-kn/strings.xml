@@ -20,6 +20,7 @@
         <item quantity="one">%1$d ಫೋನ್ ಹತ್ತಿರದಲ್ಲಿದೆ</item>
         <item quantity="other">%1$d ಫೋನ್‌ಗಳು ಹತ್ತಿರದಲ್ಲಿವೆ</item>
     </plurals>
+    <string name="home_gateway">ಆನ್‌ಲೈನ್: ಈ ಫೋನ್ SOS ಅನ್ನು ರಕ್ಷಣಾ ತಂಡಕ್ಕೆ ತಲುಪಿಸುತ್ತದೆ</string>
     <string name="mesh_off">ರಿಲೇ ಆಫ್ ಆಗಿದೆ</string>
     <string name="home_active">ನಿಮ್ಮ SOS ಸಕ್ರಿಯವಾಗಿದೆ. ಅದು ಎಲ್ಲಿಗೆ ತಲುಪಿದೆ ಎಂದು ನೋಡಲು ಒತ್ತಿ.</string>
     <string name="home_location_off">ನೀವು ಎಲ್ಲಿದ್ದೀರಿ ಎಂದು ನಿಮ್ಮ SOS ತಿಳಿಸಲು ಲೊಕೇಶನ್ ಆನ್ ಮಾಡಿ.</string>

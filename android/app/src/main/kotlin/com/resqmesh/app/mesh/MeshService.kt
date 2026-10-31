@@ -38,6 +38,7 @@ class MeshService : LifecycleService() {
         relaying = true
         graph.applyChainMode()
         graph.transport.start()
+        graph.gateway.start()
 
         lifecycleScope.launch {
             graph.state.peers.collect { peers -> updateNotification(peers.count { it.linked }) }
@@ -55,6 +56,7 @@ class MeshService : LifecycleService() {
     }
 
     override fun onDestroy() {
+        graph.gateway.stop()
         graph.transport.stop()
         super.onDestroy()
     }

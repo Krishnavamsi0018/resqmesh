@@ -29,6 +29,7 @@
         <item quantity="one">%1$d phone nearby</item>
         <item quantity="other">%1$d phones nearby</item>
     </plurals>
+    <string name="home_gateway">Online: this phone passes SOS to the rescue team</string>
     <string name="mesh_off">Relay is off</string>
     <string name="home_active">Your SOS is active. Tap to see where it is.</string>
     <string name="home_location_off">Turn on Location so your SOS says where you are.</string>

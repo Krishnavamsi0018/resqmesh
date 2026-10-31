@@ -13,6 +13,19 @@ enum class LogKind { SENT, ACCEPTED, FORWARDED, SYNCED, DUPLICATE, REJECTED, LIN
 
 data class LogEntry(val atMillis: Long, val kind: LogKind, val text: String)
 
+/** What the gateway is doing (F-40): whether this phone has internet and a server, and how uploads go. */
+data class GatewayState(
+    val online: Boolean = false,
+    val serverSet: Boolean = false,
+    val uploaded: Int = 0,
+    val waiting: Int = 0,
+    val lastContactAt: Long? = null,
+    val lastError: String? = null,
+) {
+    /** Online with a server to talk to: this phone is acting as a gateway. */
+    val active: Boolean get() = online && serverSet
+}
+
 data class Counters(
     val sent: Int = 0,
     val accepted: Int = 0,
@@ -43,6 +56,13 @@ class MeshState {
     private val _mySos = MutableStateFlow<MySos?>(null)
     /** This phone's latest SOS and how far it has got (F-14); null when there is none to show. */
     val mySos: StateFlow<MySos?> = _mySos.asStateFlow()
+
+    private val _gateway = MutableStateFlow(GatewayState())
+    val gateway: StateFlow<GatewayState> = _gateway.asStateFlow()
+
+    fun updateGateway(change: (GatewayState) -> GatewayState) {
+        _gateway.update(change)
+    }
 
     fun setMySos(sos: MySos?) {
         _mySos.value = sos

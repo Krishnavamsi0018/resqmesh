@@ -72,6 +72,7 @@ private fun MainTabs(graph: AppGraph) {
     val running by graph.state.running.collectAsStateWithLifecycle()
     val peers by graph.state.peers.collectAsStateWithLifecycle()
     val mySos by graph.state.mySos.collectAsStateWithLifecycle()
+    val gateway by graph.state.gateway.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     var countdown by rememberSaveable { mutableStateOf<Category?>(null) }
     var sending by rememberSaveable { mutableStateOf(false) }
@@ -144,6 +145,7 @@ private fun MainTabs(graph: AppGraph) {
                 Tab.HOME -> HomeScreen(
                     running = running,
                     linked = peers.count { it.linked },
+                    gatewayActive = gateway.active,
                     locationOn = locationOn,
                     mySos = mySos,
                     onPick = { category ->

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.os.BatteryManager
 import com.resqmesh.app.keys.KeyVault
+import com.resqmesh.app.gateway.Gateway
 import com.resqmesh.app.mesh.ChainSettings
 import com.resqmesh.app.mesh.MeshService
 import com.resqmesh.app.mesh.MeshNode
@@ -46,6 +47,12 @@ class AppGraph(context: Context) {
     val chain = ChainSettings(context)
     val settings = AppSettings(context)
     private val location = LocationSource(appContext)
+    val gateway = Gateway(appContext, node, state, settings, keys.nodeId.short, scope)
+
+    fun setServerUrl(url: String) {
+        settings.setServerUrl(url)
+        gateway.poke()
+    }
     private var relayAutoStarted = false
 
     /** Relaying is on by default (F-20): start it once per launch; the Network tab can still stop it. */

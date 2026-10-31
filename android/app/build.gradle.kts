@@ -12,12 +12,14 @@ android {
         applicationId = "com.resqmesh.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.4.0-sos"
+        versionCode = 8
+        versionName = "0.5.0-gateway"
 
         // Public TEST key from shared/test-vectors, so responder acks can be tried before the
         // backend exists. Week 7 replaces it with the real server key.
         buildConfigField("String", "SERVER_PUBLIC_KEY", "\"AgvUJ0RrcjQk2A0srTUro982SdDvj6rgyn6yVEOUGyk\"")
+        // Where gateways upload. Empty until the API is deployed (week 7); testers can set it in the Network tab.
+        buildConfigField("String", "API_BASE_URL", "\"\"")
     }
 
     buildFeatures {
@@ -64,4 +66,5 @@ dependencies {
 
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.junit4)
+    testImplementation(libs.org.json)
 }

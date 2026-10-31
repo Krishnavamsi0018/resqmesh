@@ -4,6 +4,9 @@ import com.resqmesh.mesh.Base64Url
 import com.resqmesh.mesh.Clock
 import com.resqmesh.mesh.crypto.NodeId
 import com.resqmesh.mesh.crypto.NodeKeys
+import com.resqmesh.mesh.gateway.GatewayQueue
+import com.resqmesh.mesh.gateway.UploadItem
+import com.resqmesh.mesh.gateway.UploadStatus
 import com.resqmesh.mesh.packet.AckBody
 import com.resqmesh.mesh.packet.BodyJson
 import com.resqmesh.mesh.packet.CancelBody
@@ -54,6 +57,13 @@ class MeshNode(
 
     private val tracker = SosTracker(clock)
 
+    /** What this phone would upload as a gateway (F-40). Filled whether or not it is online now. */
+    private val uploads = GatewayQueue(clock)
+    private val serverAcksSeen = HashSet<String>()
+
+    /** Called when something new waits for upload, so an online gateway sends it at once. */
+    var onUploadQueued: (() -> Unit)? = null
+
     /**
      * Sends the user's SOS (F-10 to F-13). It goes to every linked phone now, and the Router keeps
      * offering it to each phone that links later until it expires (F-15).
@@ -63,6 +73,7 @@ class MeshNode(
         // Track first, so the hand-overs inside originate() already count.
         tracker.started(BodyJson.decode(packet.body) as SosBody)
         val sentTo = router.originate(packet)
+        queueUpload(packet)
         state.count { it.copy(sent = it.sent + 1) }
         state.log(LogKind.SENT, "Your SOS $category ${shortId(tracker.current!!.id)} to $sentTo phone(s)")
         publishSos()
@@ -71,7 +82,9 @@ class MeshNode(
     /** "I'm safe now" or "sent by mistake" (F-16): a signed cancel follows the SOS through the mesh. */
     fun cancelSos(reason: CancelReason) {
         val sos = tracker.current?.takeIf { it.isOpen } ?: return
-        router.originate(factory.cancel(sos.id, reason))
+        val cancel = factory.cancel(sos.id, reason)
+        router.originate(cancel)
+        queueUpload(cancel)
         tracker.cancelled(reason)
         state.log(LogKind.SENT, "CANCEL ($reason) of your SOS ${shortId(sos.id)}")
         publishSos()
@@ -88,6 +101,43 @@ class MeshNode(
         publishSos()
     }
 
+    /** The next batch for the server. */
+    fun uploadBatch(): List<UploadItem> = uploads.batch()
+
+    /**
+     * The server answered an upload. For each SOS it newly confirmed, flood a gateway ack so the
+     * sender sees "rescue team informed" (F-43). That includes this phone's own SOS when it is online.
+     */
+    fun onUploaded(items: List<UploadItem>, statuses: List<UploadStatus?>) {
+        val confirmed = uploads.onUploaded(items, statuses)
+        val rejected = items.zip(statuses).count { it.second == UploadStatus.REJECTED }
+        val delivered = statuses.count { it == UploadStatus.STORED || it == UploadStatus.DUPLICATE }
+        state.log(LogKind.SYNCED, "Uploaded $delivered packet(s) to the server" + if (rejected > 0) ", $rejected refused" else "")
+        for (sosId in confirmed) {
+            val ack = factory.gatewayAck(sosId, uploaded = true, sms = false)
+            router.originate(ack)
+            if (tracker.onAck(BodyJson.decode(ack.body) as AckBody)) publishSos()
+            state.log(LogKind.SENT, "Told the mesh: rescue team informed of SOS ${shortId(sosId)}")
+        }
+        state.updateGateway { it.copy(waiting = uploads.pendingCount, uploaded = it.uploaded + delivered) }
+    }
+
+    /** SOS to ask the server about, for responder replies. */
+    fun watchedSos(): List<String> = uploads.watchedSos()
+
+    /** A responder reply from the server: checked and relayed like any packet from a neighbour (F-44). */
+    fun fromServer(envelope: ByteArray) {
+        if (!serverAcksSeen.add(Base64Url.encode(envelope))) return
+        router.onReceive(SERVER, envelope)
+        state.setHeld(router.heldCount)
+    }
+
+    private fun queueUpload(packet: Packet) {
+        uploads.offer(packet, BodyJson.decode(packet.body))
+        state.updateGateway { it.copy(waiting = uploads.pendingCount) }
+        onUploadQueued?.invoke()
+    }
+
     private fun publishSos() {
         state.setMySos(tracker.current)
         state.setHeld(router.heldCount)
@@ -97,6 +147,7 @@ class MeshNode(
         val packet = factory.sos(category, location = null, note = "mesh test", test = true)
         val sentTo = router.originate(packet)
         state.count { it.copy(sent = it.sent + 1) }
+        queueUpload(packet)
         state.log(LogKind.SENT, "SOS $category ${shortId(BodyJson.decode(packet.body).id)} to $sentTo phone(s)")
         state.setHeld(router.heldCount)
     }
@@ -114,6 +165,7 @@ class MeshNode(
         state.count { it.copy(accepted = it.accepted + 1) }
         state.log(LogKind.ACCEPTED, describe(body, packet, from))
         if (body is AckBody && tracker.onAck(body)) publishSos()
+        if (from != SERVER) queueUpload(packet)
     }
 
     override fun onHandedOver(body: PacketBody, to: NodeId) {
@@ -147,8 +199,14 @@ class MeshNode(
             is CancelBody -> "CANCEL of ${shortId(body.ref)}"
             is AckBody -> "ACK ${body.kind} for ${shortId(body.ref)}"
         }
-        return "$what ${shortId(body.id)} from $sender via ${from.short} · hops ${packet.hops} · age $age s"
+        val via = if (from == SERVER) "the server" else from.short
+        return "$what ${shortId(body.id)} from $sender via $via · hops ${packet.hops} · age $age s"
     }
 
     private fun shortId(id: String) = id.take(4)
+
+    private companion object {
+        /** Stands in for the server as the "neighbour" that replies come from. No phone has this ID. */
+        val SERVER = NodeId("0000000000000000")
+    }
 }

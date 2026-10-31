@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothSearching
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.PortableWifiOff
 import androidx.compose.material.icons.filled.Share
@@ -61,6 +62,7 @@ import com.resqmesh.mesh.sos.MySos
 fun HomeScreen(
     running: Boolean,
     linked: Int,
+    gatewayActive: Boolean,
     locationOn: Boolean,
     mySos: MySos?,
     onPick: (Category) -> Unit,
@@ -77,6 +79,12 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MeshStatusBar(running, linked, onChangeLanguage)
+        if (gatewayActive) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.CloudDone, contentDescription = null, tint = Tokens.StatusNotified)
+                Text(stringResource(R.string.home_gateway), modifier = Modifier.padding(start = 8.dp))
+            }
+        }
         if (!locationOn) {
             Banner(Icons.Filled.LocationOff, stringResource(R.string.home_location_off), Tokens.StatusWaiting) {
                 TextButton(onClick = onFixLocation) { Text(stringResource(R.string.perm_settings)) }

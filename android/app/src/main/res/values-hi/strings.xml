@@ -20,6 +20,7 @@
         <item quantity="one">%1$d फ़ोन पास में</item>
         <item quantity="other">%1$d फ़ोन पास में</item>
     </plurals>
+    <string name="home_gateway">ऑनलाइन: यह फ़ोन SOS बचाव दल तक पहुँचाता है</string>
     <string name="mesh_off">रिले बंद है</string>
     <string name="home_active">आपका SOS चालू है। देखने के लिए दबाएँ कि वह कहाँ तक पहुँचा।</string>
     <string name="home_location_off">लोकेशन चालू करें ताकि आपका SOS बताए कि आप कहाँ हैं।</string>

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -21,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -29,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,12 +41,14 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resqmesh.app.AppGraph
 import com.resqmesh.app.R
+import com.resqmesh.app.mesh.GatewayState
 import com.resqmesh.app.mesh.LogEntry
 import com.resqmesh.app.mesh.LogKind
 import com.resqmesh.app.mesh.MeshService
@@ -116,6 +121,8 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
     val held by graph.state.held.collectAsStateWithLifecycle()
     val chainOn by graph.chain.enabled.collectAsStateWithLifecycle()
     val ticked by graph.chain.ticked.collectAsStateWithLifecycle()
+    val gateway by graph.state.gateway.collectAsStateWithLifecycle()
+    val serverUrl by graph.settings.serverUrl.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -176,6 +183,7 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        item { GatewayCard(gateway, serverUrl, onSave = graph::setServerUrl) }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 Column(Modifier.weight(1f)) {
@@ -215,6 +223,40 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
             }
         }
         items(log) { LogRow(it) }
+    }
+}
+
+/** Gateway (F-40): the server address, and whether this phone is uploading to it. */
+@Composable
+private fun GatewayCard(gateway: GatewayState, serverUrl: String, onSave: (String) -> Unit) {
+    var draft by rememberSaveable(serverUrl) { mutableStateOf(serverUrl) }
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.gateway_title), style = MaterialTheme.typography.titleMedium)
+            val status = when {
+                !gateway.online -> stringResource(R.string.gateway_offline)
+                !gateway.serverSet -> stringResource(R.string.gateway_no_server)
+                gateway.lastError != null -> stringResource(R.string.gateway_error, gateway.lastError)
+                else -> stringResource(
+                    R.string.gateway_active,
+                    gateway.uploaded,
+                    gateway.waiting,
+                    gateway.lastContactAt?.let { TIME.format(Instant.ofEpochMilli(it)) } ?: "–",
+                )
+            }
+            Text(status, color = if (gateway.active && gateway.lastError == null) Tokens.StatusNotified else MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                label = { Text(stringResource(R.string.gateway_url)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (draft.trim().trimEnd('/') != serverUrl) {
+                TextButton(onClick = { onSave(draft) }) { Text(stringResource(R.string.gateway_save)) }
+            }
+        }
     }
 }
 

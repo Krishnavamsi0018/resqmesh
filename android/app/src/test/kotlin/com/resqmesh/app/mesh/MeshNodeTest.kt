@@ -3,9 +3,14 @@ package com.resqmesh.app.mesh
 import com.resqmesh.mesh.Clock
 import com.resqmesh.mesh.crypto.NodeId
 import com.resqmesh.mesh.crypto.NodeKeys
+import com.resqmesh.mesh.gateway.UploadStatus
 import com.resqmesh.mesh.packet.Category
+import com.resqmesh.mesh.packet.PacketCodec
+import com.resqmesh.mesh.packet.PacketFactory
 import com.resqmesh.mesh.packet.PacketValidator
+import com.resqmesh.mesh.packet.ResponderCodes
 import com.resqmesh.mesh.relay.Links
+import com.resqmesh.mesh.sos.SosStep
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -129,5 +134,40 @@ class MeshNodeTest {
 
         assertTrue(a.state.log.value.first().text.endsWith("to 0 phone(s)"))
         assertEquals(1, a.state.held.value)
+    }
+
+    @Test
+    fun `a gateway uploads what it relays, informs the sender, and floods the server's reply back`() {
+        val (sender, gateway) = Phone(1) to Phone(2)
+        link(sender, gateway)
+        sender.node.sendSos(Category.FLOOD, location = null, batteryPercent = 50, people = 2, lang = "kn")
+
+        // The gateway queued the SOS it accepted; the server confirms it.
+        val batch = gateway.node.uploadBatch()
+        assertEquals(1, batch.size)
+        gateway.node.onUploaded(batch, listOf(UploadStatus.STORED))
+        assertEquals(SosStep.NOTIFIED, sender.state.mySos.value!!.step, "the gateway ack reached the sender")
+
+        // An operator replies; the gateway pulls it from the server and floods it to the sender.
+        val sosId = sender.state.mySos.value!!.id
+        assertEquals(listOf(sosId), gateway.node.watchedSos())
+        val reply = PacketFactory(server, clock).responderAck(sosId, ResponderCodes.TEAM_DISPATCHED, unit = "NDRF 4")
+        gateway.node.fromServer(PacketCodec.encode(reply))
+        gateway.node.fromServer(PacketCodec.encode(reply)) // pulled again 30 s later: ignored
+
+        val mine = sender.state.mySos.value!!
+        assertEquals(SosStep.ACKED, mine.step)
+        assertEquals("NDRF 4", mine.reply?.unit)
+        assertEquals(0, gateway.state.counters.value.duplicates)
+    }
+
+    @Test
+    fun `an online sender informs itself straight away`() {
+        val phone = Phone(1)
+        phone.node.sendSos(Category.MEDICAL, location = null, batteryPercent = null, people = 1, lang = "en")
+
+        phone.node.onUploaded(phone.node.uploadBatch(), listOf(UploadStatus.STORED))
+
+        assertEquals(SosStep.NOTIFIED, phone.state.mySos.value!!.step)
     }
 }
