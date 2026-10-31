@@ -41,6 +41,7 @@
         <item quantity="other">%1$d फ़ोन तक पहुँचा</item>
     </plurals>
     <string name="step_notified">बचाव दल को सूचना मिल गई</string>
+    <string name="step_notified_sms">बचाव दल को सूचना मिल गई (SMS से भी)</string>
     <string name="step_acked">मदद आ रही है</string>
     <string name="status_location">लोकेशन भेजी गई, %1$d मीटर तक सटीक</string>
     <string name="status_location_no_accuracy">लोकेशन भेजी गई</string>

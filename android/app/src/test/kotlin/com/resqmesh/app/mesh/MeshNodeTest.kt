@@ -4,6 +4,8 @@ import com.resqmesh.mesh.Clock
 import com.resqmesh.mesh.crypto.NodeId
 import com.resqmesh.mesh.crypto.NodeKeys
 import com.resqmesh.mesh.gateway.UploadStatus
+import com.resqmesh.mesh.packet.AckBody
+import com.resqmesh.mesh.packet.BodyJson
 import com.resqmesh.mesh.packet.Category
 import com.resqmesh.mesh.packet.PacketCodec
 import com.resqmesh.mesh.packet.PacketFactory
@@ -14,11 +16,13 @@ import com.resqmesh.mesh.sos.SosStep
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Phones wired back to back: everything except the radio. */
 class MeshNodeTest {
-    private val clock = Clock { 1_793_000_000_000L }
+    private var now = 1_793_000_000_000L
+    private val clock = Clock { now }
     private val server = NodeKeys.fromPrivateKey(ByteArray(32) { (0x81 + it).toByte() })
 
     private inner class Phone(seed: Int) : Links {
@@ -159,6 +163,40 @@ class MeshNodeTest {
         assertEquals(SosStep.ACKED, mine.step)
         assertEquals("NDRF 4", mine.reply?.unit)
         assertEquals(0, gateway.state.counters.value.duplicates)
+    }
+
+    @Test
+    fun `one phone texts the SOS, the mesh learns it, and nobody texts it again`() {
+        val (a, b) = Phone(1) to Phone(2)
+        link(a, b)
+        a.node.sendSos(Category.FIRE, location = null, batteryPercent = 50, people = 2, lang = "kn")
+        assertTrue(b.node.smsDue().isEmpty(), "waits 5 to 20 s first")
+
+        now += 20_000
+        val job = b.node.smsDue().single()
+        assertEquals(a.state.mySos.value!!.id, job.id)
+        assertEquals(0, job.hops)
+        b.node.onSmsResult(job.id, sent = true)
+
+        val mine = a.state.mySos.value!!
+        assertNotNull(mine.textedAt, "the sender sees it was texted")
+        assertEquals(SosStep.NOTIFIED, mine.step)
+        now += 60_000
+        assertTrue(a.node.smsDue().isEmpty(), "the sender's own phone no longer needs to text it")
+        val upload = b.node.uploadBatch().map { BodyJson.decode(PacketCodec.decode(it.envelope).body) }
+        assertTrue(upload.any { it is AckBody && it.sms == true }, "the server learns it was texted")
+    }
+
+    @Test
+    fun `a failed SMS leaves the sender's steps alone`() {
+        val (a, b) = Phone(1) to Phone(2)
+        link(a, b)
+        a.node.sendSos(Category.FIRE, location = null, batteryPercent = 50, people = 2, lang = "en")
+        now += 20_000
+        b.node.onSmsResult(b.node.smsDue().single().id, sent = false)
+
+        assertNull(a.state.mySos.value!!.textedAt)
+        assertEquals(LogKind.ERROR, b.state.log.value.first().kind)
     }
 
     @Test

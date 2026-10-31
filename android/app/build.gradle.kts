@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     // AGP 9 compiles Kotlin itself (built-in Kotlin), so there is no kotlin-android plugin here.
     alias(libs.plugins.android.application)
@@ -12,14 +14,18 @@ android {
         applicationId = "com.resqmesh.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.6.0-online"
+        versionCode = 10
+        versionName = "0.7.0-sms"
 
         // Public half of the server key that signs responder replies (F-31). The private seed is
         // SERVER_KEY_SEED_HEX on the server only; a new key means a new app release.
         buildConfigField("String", "SERVER_PUBLIC_KEY", "\"2u5qNe3LJcC0vS4rGDWEWINv_K3TVtto0UlR2p308XA\"")
         // Where gateways upload: the Render service (render.yaml). Testers can change it in the Network tab.
         buildConfigField("String", "API_BASE_URL", "\"https://resqmesh-ds0v.onrender.com\"")
+        // Team phones SOS may be texted to (TRD 2.7 number policy), from resqmesh.smsNumbers in
+        // local.properties so personal numbers stay out of git. Empty: this build sends no SMS.
+        val smsNumbers = localProperty("resqmesh.smsNumbers").filter { it.isDigit() || it == '+' || it == ',' }
+        buildConfigField("String", "SMS_ALLOWED_NUMBERS", "\"$smsNumbers\"")
     }
 
     buildFeatures {
@@ -67,4 +73,10 @@ dependencies {
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.junit4)
     testImplementation(libs.org.json)
+}
+
+fun localProperty(key: String): String {
+    val file = rootProject.file("local.properties")
+    if (!file.exists()) return ""
+    return Properties().apply { file.inputStream().use { load(it) } }.getProperty(key).orEmpty()
 }

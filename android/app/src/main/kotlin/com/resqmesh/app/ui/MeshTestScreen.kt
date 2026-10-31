@@ -53,6 +53,8 @@ import com.resqmesh.app.mesh.LogEntry
 import com.resqmesh.app.mesh.LogKind
 import com.resqmesh.app.mesh.MeshService
 import com.resqmesh.app.mesh.Peer
+import com.resqmesh.app.mesh.SmsState
+import com.resqmesh.app.settings.SmsPolicy
 import com.resqmesh.app.ui.theme.Tokens
 import com.resqmesh.mesh.packet.Category
 import java.time.Instant
@@ -123,6 +125,8 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
     val ticked by graph.chain.ticked.collectAsStateWithLifecycle()
     val gateway by graph.state.gateway.collectAsStateWithLifecycle()
     val serverUrl by graph.settings.serverUrl.collectAsStateWithLifecycle()
+    val sms by graph.state.sms.collectAsStateWithLifecycle()
+    val smsNumber by graph.settings.smsNumber.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -184,6 +188,14 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
             )
         }
         item { GatewayCard(gateway, serverUrl, onSave = graph::setServerUrl) }
+        item {
+            SmsCard(
+                sms = sms,
+                number = smsNumber,
+                onEnabled = graph.settings::setSmsEnabled,
+                onSaveNumber = graph.settings::setSmsNumber,
+            )
+        }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 Column(Modifier.weight(1f)) {
@@ -255,6 +267,58 @@ private fun GatewayCard(gateway: GatewayState, serverUrl: String, onSave: (Strin
             )
             if (draft.trim().trimEnd('/') != serverUrl) {
                 TextButton(onClick = { onSave(draft) }) { Text(stringResource(R.string.gateway_save)) }
+            }
+        }
+    }
+}
+
+/** SMS escalation (F-41): the team number, the permission, and whether this phone can text now. */
+@Composable
+private fun SmsCard(sms: SmsState, number: String, onEnabled: (Boolean) -> Unit, onSaveNumber: (String) -> Boolean) {
+    var draft by rememberSaveable(number) { mutableStateOf(number) }
+    var refused by remember { mutableStateOf(false) }
+    val askPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.sms_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Switch(checked = sms.enabled, onCheckedChange = onEnabled)
+            }
+            val status = when {
+                SmsPolicy.allowed.isEmpty() -> stringResource(R.string.sms_no_allow_list)
+                !sms.enabled -> stringResource(R.string.sms_off)
+                !sms.permission -> stringResource(R.string.sms_no_permission)
+                !sms.numberAllowed -> stringResource(R.string.sms_bad_number)
+                !sms.service -> stringResource(R.string.sms_no_service, sms.waiting)
+                sms.lastError != null -> stringResource(R.string.sms_error, sms.lastError, sms.sent, sms.waiting)
+                else -> stringResource(
+                    R.string.sms_ready,
+                    sms.sent,
+                    sms.waiting,
+                    sms.lastSentAt?.let { TIME.format(Instant.ofEpochMilli(it)) } ?: "–",
+                )
+            }
+            Text(status, color = if (sms.ready && sms.lastError == null) Tokens.StatusNotified else MaterialTheme.colorScheme.onSurfaceVariant)
+            if (!sms.permission) {
+                OutlinedButton(onClick = { askPermission.launch(android.Manifest.permission.SEND_SMS) }) {
+                    Text(stringResource(R.string.sms_allow))
+                }
+            }
+            OutlinedTextField(
+                value = draft,
+                onValueChange = {
+                    draft = it
+                    refused = false
+                },
+                label = { Text(stringResource(R.string.sms_number)) },
+                singleLine = true,
+                isError = refused,
+                supportingText = if (refused) ({ Text(stringResource(R.string.sms_number_refused)) }) else null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (SmsPolicy.normalize(draft) != number) {
+                TextButton(onClick = { refused = !onSaveNumber(draft) }) { Text(stringResource(R.string.gateway_save)) }
             }
         }
     }

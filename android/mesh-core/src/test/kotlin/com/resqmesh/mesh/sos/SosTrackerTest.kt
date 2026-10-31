@@ -72,6 +72,21 @@ class SosTrackerTest {
     }
 
     @Test
+    fun `an SMS ack marks the SOS as texted, even after an upload ack`() {
+        tracker.started(sos)
+        assertTrue(tracker.onAck(ack(gateway, AckKind.GATEWAY)))
+        clock.now += 9_000
+        val texted = BodyJson.decode(server.gatewayAck(sos.id, uploaded = false, sms = true).body) as AckBody
+
+        assertTrue(tracker.onAck(texted))
+        assertFalse(tracker.onAck(texted), "a second SMS ack changes nothing")
+        val mine = tracker.current!!
+        assertEquals(Fixtures.NOW, mine.notifiedAt, "informed when the first gateway reported")
+        assertEquals(Fixtures.NOW + 9_000, mine.textedAt)
+        assertEquals(SosStep.NOTIFIED, mine.step)
+    }
+
+    @Test
     fun `a gateway ack means the rescue team is informed, a responder ack that help is coming`() {
         tracker.started(sos)
         tracker.onHandedOver(sos, b)

@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.BatteryManager
 import com.resqmesh.app.keys.KeyVault
 import com.resqmesh.app.gateway.Gateway
+import com.resqmesh.app.gateway.SmsGateway
 import com.resqmesh.app.mesh.ChainSettings
 import com.resqmesh.app.mesh.MeshService
 import com.resqmesh.app.mesh.MeshNode
@@ -48,6 +49,7 @@ class AppGraph(context: Context) {
     val settings = AppSettings(context)
     private val location = LocationSource(appContext)
     val gateway = Gateway(appContext, node, state, settings, keys.nodeId.short, scope)
+    val sms = SmsGateway(appContext, node, state, settings, scope)
 
     fun setServerUrl(url: String) {
         settings.setServerUrl(url)

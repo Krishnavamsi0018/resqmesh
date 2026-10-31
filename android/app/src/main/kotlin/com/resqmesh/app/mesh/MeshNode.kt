@@ -5,6 +5,8 @@ import com.resqmesh.mesh.Clock
 import com.resqmesh.mesh.crypto.NodeId
 import com.resqmesh.mesh.crypto.NodeKeys
 import com.resqmesh.mesh.gateway.GatewayQueue
+import com.resqmesh.mesh.gateway.SmsEscalator
+import com.resqmesh.mesh.gateway.SmsJob
 import com.resqmesh.mesh.gateway.UploadItem
 import com.resqmesh.mesh.gateway.UploadStatus
 import com.resqmesh.mesh.packet.AckBody
@@ -61,6 +63,9 @@ class MeshNode(
     private val uploads = GatewayQueue(clock)
     private val serverAcksSeen = HashSet<String>()
 
+    /** What this phone would text to the rescue team (F-41). Filled whether or not it has signal now. */
+    private val texts = SmsEscalator(clock)
+
     /** Called when something new waits for upload, so an online gateway sends it at once. */
     var onUploadQueued: (() -> Unit)? = null
 
@@ -74,6 +79,7 @@ class MeshNode(
         tracker.started(BodyJson.decode(packet.body) as SosBody)
         val sentTo = router.originate(packet)
         queueUpload(packet)
+        texts.offer(BodyJson.decode(packet.body) as SosBody, hops = 0)
         state.count { it.copy(sent = it.sent + 1) }
         state.log(LogKind.SENT, "Your SOS $category ${shortId(tracker.current!!.id)} to $sentTo phone(s)")
         publishSos()
@@ -85,6 +91,7 @@ class MeshNode(
         val cancel = factory.cancel(sos.id, reason)
         router.originate(cancel)
         queueUpload(cancel)
+        texts.onCancel(sos.id)
         tracker.cancelled(reason)
         state.log(LogKind.SENT, "CANCEL ($reason) of your SOS ${shortId(sos.id)}")
         publishSos()
@@ -132,6 +139,31 @@ class MeshNode(
         state.setHeld(router.heldCount)
     }
 
+    /** SOS to text now; the caller has signal, permission and an allowed number. */
+    fun smsDue(): List<SmsJob> = texts.due()
+
+    val smsWaiting: Int get() = texts.pendingCount
+
+    /** Cellular service came back (or SMS became possible): waiting SOS wait a fresh random time. */
+    fun onSmsPossible() = texts.onServiceChanged(available = true)
+
+    /**
+     * Android reported whether the SMS for [sosId] went out. If it did, flood a gateway ack with
+     * sms=true so other phones don't text it too and the sender sees it was texted, and upload that
+     * ack so the dashboard knows.
+     */
+    fun onSmsResult(sosId: String, sent: Boolean) {
+        if (!texts.onResult(sosId, sent)) {
+            if (!sent) state.log(LogKind.ERROR, "SMS for SOS ${shortId(sosId)} failed, will retry")
+            return
+        }
+        val ack = factory.gatewayAck(sosId, uploaded = false, sms = true)
+        router.originate(ack)
+        queueUpload(ack)
+        if (tracker.onAck(BodyJson.decode(ack.body) as AckBody)) publishSos()
+        state.log(LogKind.SENT, "Texted SOS ${shortId(sosId)} to the rescue team; told the mesh")
+    }
+
     private fun queueUpload(packet: Packet) {
         uploads.offer(packet, BodyJson.decode(packet.body))
         state.updateGateway { it.copy(waiting = uploads.pendingCount) }
@@ -165,6 +197,11 @@ class MeshNode(
         state.count { it.copy(accepted = it.accepted + 1) }
         state.log(LogKind.ACCEPTED, describe(body, packet, from))
         if (body is AckBody && tracker.onAck(body)) publishSos()
+        when (body) {
+            is SosBody -> texts.offer(body, packet.hops)
+            is CancelBody -> texts.onCancel(body.ref)
+            is AckBody -> texts.onAck(body)
+        }
         if (from != SERVER) queueUpload(packet)
     }
 

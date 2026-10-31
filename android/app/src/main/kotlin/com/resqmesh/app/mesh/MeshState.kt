@@ -26,6 +26,22 @@ data class GatewayState(
     val active: Boolean get() = online && serverSet
 }
 
+/** What SMS escalation is doing (F-41): whether this phone can text the rescue team, and how it goes. */
+data class SmsState(
+    val permission: Boolean = false,
+    val enabled: Boolean = true,
+    /** The rescue team number is set and on the build's allow-list. */
+    val numberAllowed: Boolean = false,
+    /** The phone has cellular service (data not needed). */
+    val service: Boolean = false,
+    val sent: Int = 0,
+    val waiting: Int = 0,
+    val lastSentAt: Long? = null,
+    val lastError: String? = null,
+) {
+    val ready: Boolean get() = permission && enabled && numberAllowed && service
+}
+
 data class Counters(
     val sent: Int = 0,
     val accepted: Int = 0,
@@ -62,6 +78,13 @@ class MeshState {
 
     fun updateGateway(change: (GatewayState) -> GatewayState) {
         _gateway.update(change)
+    }
+
+    private val _sms = MutableStateFlow(SmsState())
+    val sms: StateFlow<SmsState> = _sms.asStateFlow()
+
+    fun updateSms(change: (SmsState) -> SmsState) {
+        _sms.update(change)
     }
 
     fun setMySos(sos: MySos?) {

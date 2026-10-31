@@ -144,7 +144,7 @@ private fun Stepper(sos: MySos) {
             },
             sos.relayedAt,
         ),
-        Step(SosStep.NOTIFIED, Icons.Filled.CloudDone, Tokens.StatusNotified, stringResource(R.string.step_notified), sos.notifiedAt),
+        Step(SosStep.NOTIFIED, Icons.Filled.CloudDone, Tokens.StatusNotified, stringResource(if (sos.textedAt != null) R.string.step_notified_sms else R.string.step_notified), sos.notifiedAt),
         Step(SosStep.ACKED, Icons.Filled.Verified, Tokens.StatusAcked, stringResource(R.string.step_acked), sos.ackedAt),
     )
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

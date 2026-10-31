@@ -41,6 +41,7 @@
         <item quantity="other">%1$d ಫೋನ್‌ಗಳಿಗೆ ತಲುಪಿದೆ</item>
     </plurals>
     <string name="step_notified">ರಕ್ಷಣಾ ತಂಡಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ</string>
+    <string name="step_notified_sms">ರಕ್ಷಣಾ ತಂಡಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ (SMS ಮೂಲಕವೂ)</string>
     <string name="step_acked">ಸಹಾಯ ಬರುತ್ತಿದೆ</string>
     <string name="status_location">ಲೊಕೇಶನ್ ಕಳುಹಿಸಲಾಗಿದೆ, %1$d ಮೀ ವರೆಗೆ ನಿಖರ</string>
     <string name="status_location_no_accuracy">ಲೊಕೇಶನ್ ಕಳುಹಿಸಲಾಗಿದೆ</string>

@@ -276,7 +276,9 @@ function Timeline({ sos }) {
         : {
             at: a.createdAt,
             icon: a.sms ? 'sms' : 'cloud_done',
-            text: `Gateway ${a.gatewayNodeId ?? ''} told the mesh the rescue team was informed${a.sms ? ' by SMS' : ''}`,
+            text: a.sms
+              ? `Phone ${a.gatewayNodeId ?? ''} texted this SOS to the rescue team's SMS number`
+              : `Gateway ${a.gatewayNodeId ?? ''} told the mesh the rescue team was informed`,
           },
     ),
     ...(sos.cancel ? [{ at: sos.cancel.ts, icon: 'check_circle', tone: 'safe', text: CANCEL_REASONS[sos.cancel.reason] ?? 'Cancelled by the sender' }] : []),

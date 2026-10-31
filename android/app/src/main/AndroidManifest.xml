@@ -14,6 +14,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Gateway uploads to the backend (TRD 2.7). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- SMS escalation to the rescue team when there is signal but no data (TRD 2.7). Optional: phones without telephony still relay. -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <!-- Nearby discovery on Android 11 and older, and the SOS location from week 6. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />

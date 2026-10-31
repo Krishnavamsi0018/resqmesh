@@ -52,6 +52,7 @@
         <item quantity="other">Passed to %1$d phones</item>
     </plurals>
     <string name="step_notified">Rescue team informed</string>
+    <string name="step_notified_sms">Rescue team informed (also by SMS)</string>
     <string name="step_acked">Help is coming</string>
     <string name="status_location">Location sent, accurate to %1$d m</string>
     <string name="status_location_no_accuracy">Location sent</string>

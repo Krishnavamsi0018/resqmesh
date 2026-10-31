@@ -34,6 +34,8 @@ data class MySos(
     val passedTo: Set<NodeId> = emptySet(),
     val relayedAt: Long? = null,
     val notifiedAt: Long? = null,
+    /** When a gateway reported that it texted this SOS to the rescue team (F-41). */
+    val textedAt: Long? = null,
     val ackedAt: Long? = null,
     val reply: Reply? = null,
     val closedAt: Long? = null,
@@ -84,7 +86,11 @@ class SosTracker(private val clock: Clock) {
         val sos = current?.takeIf { it.isOpen && it.id == ack.ref } ?: return false
         val now = clock.nowMillis()
         current = when (ack.kind) {
-            AckKind.GATEWAY -> if (sos.notifiedAt != null) return false else sos.copy(notifiedAt = now)
+            AckKind.GATEWAY -> when {
+                ack.sms == true && sos.textedAt == null -> sos.copy(notifiedAt = sos.notifiedAt ?: now, textedAt = now)
+                sos.notifiedAt == null -> sos.copy(notifiedAt = now)
+                else -> return false
+            }
             AckKind.RESPONDER -> sos.copy(
                 notifiedAt = sos.notifiedAt ?: now,
                 ackedAt = now,

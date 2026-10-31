@@ -29,4 +29,15 @@
     <string name="gateway_active">Gateway on · uploaded %1$d · waiting %2$d · last contact %3$s</string>
     <string name="gateway_url">Server address (empty = built-in server)</string>
     <string name="gateway_save">Save</string>
+    <string name="sms_title">SMS to the rescue team</string>
+    <string name="sms_no_allow_list">This build has no team numbers (resqmesh.smsNumbers in local.properties), so it never texts.</string>
+    <string name="sms_off">SMS off. This phone only relays and uploads.</string>
+    <string name="sms_no_permission">Needs permission to send SMS.</string>
+    <string name="sms_allow">Allow SMS</string>
+    <string name="sms_bad_number">Set a team number below.</string>
+    <string name="sms_no_service">No mobile signal: cannot text now · waiting %1$d</string>
+    <string name="sms_error">Last SMS failed: %1$s · texted %2$d · waiting %3$d</string>
+    <string name="sms_ready">Signal: texts SOS to the team · texted %1$d · waiting %2$d · last %3$s</string>
+    <string name="sms_number">Team number</string>
+    <string name="sms_number_refused">Only the team test numbers are allowed (never 112).</string>
 </resources>
