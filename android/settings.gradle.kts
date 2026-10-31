@@ -18,4 +18,4 @@ rootProject.name = "resqmesh"
 
 include(":mesh-core")
 include(":app")
-// :simulator joins in week 5.
+include(":simulator")

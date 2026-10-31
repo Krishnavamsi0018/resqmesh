@@ -101,6 +101,21 @@ class RouterTest {
     }
 
     @Test
+    fun `plain flooding, the experiments' baseline, never reaches a phone that links later`() {
+        val flooding = RouterConfig(storeCarryForward = false)
+        val (a, b, c) = List(3) { mesh.phone(it + 1, flooding) }
+        mesh.chain(a, b)
+        a.router.originate(sos(a))
+        mesh.deliverAll()
+
+        mesh.link(b, c)
+        mesh.deliverAll()
+
+        assertEquals(1, b.delivered.size, "phones linked while it spreads still get it")
+        assertTrue(c.delivered.isEmpty())
+    }
+
+    @Test
     fun `a sender with no neighbours hands its SOS to the first phone that comes along`() {
         val (a, b) = List(2) { mesh.phone(it + 1) }
         assertEquals(0, a.router.originate(sos(a)))

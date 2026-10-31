@@ -18,4 +18,4 @@ jobs:
           java-version: "25"
       - uses: gradle/actions/setup-gradle@v4
       # The runner image ships the Android SDK (ANDROID_HOME); AGP fetches a missing platform itself.
-      - run: ./gradlew :mesh-core:test :app:testDebugUnitTest :app:assembleDebug
+      - run: ./gradlew :mesh-core:test :simulator:test :app:testDebugUnitTest :app:assembleDebug

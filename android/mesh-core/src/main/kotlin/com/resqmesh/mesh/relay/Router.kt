@@ -52,6 +52,11 @@ data class RouterConfig(
     val sosPerSender: Int = 5,
     val sosWindowMs: Long = 10 * 60 * 1000L,
     val pruneEveryMs: Long = 5_000,
+    /**
+     * Offer held packets to phones that link later (F-15). Off only for the plain-flooding baseline
+     * in the experiments, where a packet reaches just the phones linked while it spreads.
+     */
+    val storeCarryForward: Boolean = true,
 )
 
 /**
@@ -154,6 +159,7 @@ class Router(
     /** A link came up: tell the neighbour what we hold so it can ask for what it lacks. */
     fun onLinked(peer: NodeId) {
         prune()
+        if (!config.storeCarryForward) return
         val keys = held.entries
             .filter { peer !in it.value.peersWithIt }
             .sortedByDescending { it.value.heldAt }
