@@ -79,8 +79,10 @@ export function createService({ store, serverKeys, clock = Date.now }) {
   async function ingestSos(body, packet, envelope, gateway, now) {
     const existing = await store.getSos(body.id);
     if (existing && existing.senderPk !== body.pk) return { status: 'rejected', reason: 'ID_CONFLICT', id: body.id };
-    if (gateway) await store.addSighting({ sosId: body.id, gatewayNodeId: gateway, hops: packet.hops, receivedAt: now });
+    // A sighting refers to its SOS row, so the SOS is stored first.
+    const sighted = () => gateway && store.addSighting({ sosId: body.id, gatewayNodeId: gateway, hops: packet.hops, receivedAt: now });
     if (existing) {
+      await sighted();
       events.emit('sos.updated', { id: body.id });
       return { status: 'duplicate', id: body.id, sosId: body.id };
     }
@@ -108,6 +110,7 @@ export function createService({ store, serverKeys, clock = Date.now }) {
       envelope,
       updatedAt: now,
     });
+    await sighted();
     // A cancel can overtake its SOS through the mesh; apply it now.
     const cancel = await store.getCancelFor(body.id);
     if (cancel && cancel.senderPk === body.pk) await applyCancel(body.id, cancel, now);

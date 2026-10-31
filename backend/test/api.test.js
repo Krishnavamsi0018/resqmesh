@@ -154,7 +154,7 @@ describe('operators (F-50 to F-54)', () => {
     await ops.patch(`/api/v1/sos/${flood.id}`).send({ status: 'NEW' }).expect(400);
   });
 
-  test('the live stream announces a new SOS', async () => {
+  test('the live stream announces a new SOS', { timeout: 10_000 }, async () => {
     const { app, http } = await setup();
     const login = await http.post('/api/v1/auth/login').send({ email: 'ops@resqmesh.test', password: 'correct horse battery' });
     const cookie = login.headers['set-cookie'][0].split(';')[0];

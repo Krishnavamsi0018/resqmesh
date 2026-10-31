@@ -38,6 +38,8 @@ export class MemoryStore {
   }
 
   async addSighting(sighting) {
+    // Postgres enforces this with a foreign key; failing here too keeps the tests honest.
+    if (!this.#sos.has(sighting.sosId)) throw new Error(`Sighting for unknown SOS ${sighting.sosId}`);
     this.#sightings.push(copy(sighting));
   }
 
