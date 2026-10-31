@@ -1,5 +1,7 @@
 package com.resqmesh.app.mesh
 
+import com.resqmesh.app.experiment.ExperimentEvent
+import com.resqmesh.app.experiment.ExperimentEventKind
 import com.resqmesh.mesh.Base64Url
 import com.resqmesh.mesh.Clock
 import com.resqmesh.mesh.crypto.NodeId
@@ -10,6 +12,7 @@ import com.resqmesh.mesh.gateway.SmsJob
 import com.resqmesh.mesh.gateway.UploadItem
 import com.resqmesh.mesh.gateway.UploadStatus
 import com.resqmesh.mesh.packet.AckBody
+import com.resqmesh.mesh.packet.AckKind
 import com.resqmesh.mesh.packet.BodyJson
 import com.resqmesh.mesh.packet.CancelBody
 import com.resqmesh.mesh.packet.CancelReason
@@ -65,6 +68,15 @@ class MeshNode(
 
     /** What this phone would text to the rescue team (F-41). Filled whether or not it has signal now. */
     private val texts = SmsEscalator(clock)
+
+    /** Field experiments (TRD 2.12): what happens to test SOS, for the CSV log. */
+    var onExperimentEvent: ((ExperimentEvent) -> Unit)? = null
+
+    /** At the end of an experiment chain: answer every test SOS with an echo so the sender can time the round trip. */
+    var echoTestSos = false
+
+    /** This phone's test SOS still waiting for an echo, with when they left. */
+    private val testSentAt = LinkedHashMap<String, Long>()
 
     /** Called when something new waits for upload, so an online gateway sends it at once. */
     var onUploadQueued: (() -> Unit)? = null
@@ -175,13 +187,24 @@ class MeshNode(
         state.setHeld(router.heldCount)
     }
 
-    fun sendTestSos(category: Category) {
+    /** Sends a test SOS (never texted, shown as TEST) and returns its ID. */
+    fun sendTestSos(category: Category): String {
         val packet = factory.sos(category, location = null, note = "mesh test", test = true)
+        val id = BodyJson.decode(packet.body).id
+        val now = clock.nowMillis()
+        testSentAt[id] = now
+        while (testSentAt.size > 1000) testSentAt.remove(testSentAt.keys.first())
+        experiment(ExperimentEvent(now, ExperimentEventKind.SENT, id, sentTs = now))
         val sentTo = router.originate(packet)
         state.count { it.copy(sent = it.sent + 1) }
         queueUpload(packet)
-        state.log(LogKind.SENT, "SOS $category ${shortId(BodyJson.decode(packet.body).id)} to $sentTo phone(s)")
+        state.log(LogKind.SENT, "SOS $category ${shortId(id)} to $sentTo phone(s)")
         state.setHeld(router.heldCount)
+        return id
+    }
+
+    private fun experiment(event: ExperimentEvent) {
+        onExperimentEvent?.invoke(event)
     }
 
     fun onBytes(from: NodeId, bytes: ByteArray) {
@@ -203,13 +226,32 @@ class MeshNode(
             is AckBody -> texts.onAck(body)
         }
         if (from != SERVER) queueUpload(packet)
+        logExperiment(body, packet, from)
+    }
+
+    private fun logExperiment(body: PacketBody, packet: Packet, from: NodeId) {
+        val now = clock.nowMillis()
+        if (body is SosBody && body.test) {
+            // packet.hops counts the phones that relayed it; radio hops are one more.
+            experiment(ExperimentEvent(now, ExperimentEventKind.RECEIVED, body.id, from.short, packet.hops + 1, body.ts))
+            if (echoTestSos) {
+                router.originate(factory.gatewayAck(body.id, uploaded = false, sms = false))
+                experiment(ExperimentEvent(clock.nowMillis(), ExperimentEventKind.ECHO_SENT, body.id, from.short))
+            }
+        }
+        if (body is AckBody && body.kind == AckKind.GATEWAY) {
+            val sentAt = testSentAt.remove(body.ref) ?: return
+            experiment(ExperimentEvent(now, ExperimentEventKind.ECHO_RECEIVED, body.ref, from.short, packet.hops + 1, sentAt, now - sentAt))
+        }
     }
 
     override fun onHandedOver(body: PacketBody, to: NodeId) {
         if (tracker.onHandedOver(body, to)) publishSos()
+        if (body is SosBody && body.test) experiment(ExperimentEvent(clock.nowMillis(), ExperimentEventKind.TX, body.id, to.short))
     }
 
     override fun onDuplicate(body: PacketBody, from: NodeId) {
+        if (body is SosBody && body.test) experiment(ExperimentEvent(clock.nowMillis(), ExperimentEventKind.DUPLICATE, body.id, from.short))
         state.count { it.copy(duplicates = it.duplicates + 1) }
         state.log(LogKind.DUPLICATE, "Duplicate ${shortId(body.id)} from ${from.short}")
     }

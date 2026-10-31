@@ -184,6 +184,9 @@ export default function LiveOps({ operator, onLogout, onSignedOut }) {
           <Count value={counts.people} label="people waiting" />
         </div>
         <div className="topbar-right">
+          <a className="btn btn-quiet" href="#results">
+            <span className="material-symbols-outlined" aria-hidden="true">monitoring</span> Results
+          </a>
           <span className={`live live-${live}`} title={live === 'live' ? 'Receiving updates as they happen' : 'Connection lost, reconnecting'}>
             <span className="live-dot" />
             {live === 'live' ? 'Live' : live === 'connecting' ? 'Connecting…' : 'Reconnecting…'}

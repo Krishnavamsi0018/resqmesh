@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import android.os.BatteryManager
 import com.resqmesh.app.keys.KeyVault
+import com.resqmesh.app.experiment.ExperimentLog
+import com.resqmesh.app.experiment.ExperimentRunner
 import com.resqmesh.app.gateway.Gateway
 import com.resqmesh.app.gateway.SmsGateway
 import com.resqmesh.app.mesh.ChainSettings
@@ -50,6 +52,8 @@ class AppGraph(context: Context) {
     private val location = LocationSource(appContext)
     val gateway = Gateway(appContext, node, state, settings, keys.nodeId.short, scope)
     val sms = SmsGateway(appContext, node, state, settings, scope)
+    /** Field experiments; the CSV files land in Android/data/com.resqmesh.app/files/experiments. */
+    val experiment = ExperimentRunner(node, ExperimentLog(keys.nodeId.short, appContext.getExternalFilesDir("experiments")), scope)
 
     fun setServerUrl(url: String) {
         settings.setServerUrl(url)

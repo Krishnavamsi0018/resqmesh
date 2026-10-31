@@ -29,6 +29,15 @@
     <string name="gateway_active">Gateway on · uploaded %1$d · waiting %2$d · last contact %3$s</string>
     <string name="gateway_url">Server address (empty = built-in server)</string>
     <string name="gateway_save">Save</string>
+    <string name="exp_title">Field experiment</string>
+    <string name="exp_echo">Echo test SOS (turn on only at the far end of the chain)</string>
+    <string name="exp_count">Test SOS</string>
+    <string name="exp_interval">Every (s)</string>
+    <string name="exp_status">Sent %1$d/%2$d · echoes %3$d · logged %4$d</string>
+    <string name="exp_start">Start sending</string>
+    <string name="exp_stop">Stop</string>
+    <string name="exp_save">Save CSV</string>
+    <string name="exp_saved">Saved %1$s</string>
     <string name="sms_title">SMS to the rescue team</string>
     <string name="sms_no_allow_list">This build has no team numbers (resqmesh.smsNumbers in local.properties), so it never texts.</string>
     <string name="sms_off">SMS off. This phone only relays and uploads.</string>

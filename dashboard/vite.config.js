@@ -7,6 +7,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // The Results page (W4) imports the experiment summaries from ../experiments.
+    fs: { allow: ['..'] },
     proxy: { '/api': { target: process.env.RESQMESH_API ?? 'http://localhost:8080', changeOrigin: true } },
   },
 });

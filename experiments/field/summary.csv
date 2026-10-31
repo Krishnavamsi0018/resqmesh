@@ -1,0 +1,4 @@
+label,hops,phones,sent,delivered,delivery_ratio,echoed,latency_median_ms,latency_p90_ms,tx_per_sos,duplicates_per_sos
+hops-1,1,4,50,50,1.000,50,103,139,3.00,0.00
+hops-2,2,4,50,50,1.000,50,161,210,3.00,0.00
+hops-3,3,4,50,50,1.000,50,225,266,3.00,0.00

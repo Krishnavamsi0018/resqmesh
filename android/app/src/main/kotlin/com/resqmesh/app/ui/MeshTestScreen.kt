@@ -52,6 +52,8 @@ import com.resqmesh.app.mesh.GatewayState
 import com.resqmesh.app.mesh.LogEntry
 import com.resqmesh.app.mesh.LogKind
 import com.resqmesh.app.mesh.MeshService
+import com.resqmesh.app.experiment.ExperimentRunner
+import com.resqmesh.app.experiment.ExperimentState
 import com.resqmesh.app.mesh.Peer
 import com.resqmesh.app.mesh.SmsState
 import com.resqmesh.app.settings.SmsPolicy
@@ -127,6 +129,7 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
     val serverUrl by graph.settings.serverUrl.collectAsStateWithLifecycle()
     val sms by graph.state.sms.collectAsStateWithLifecycle()
     val smsNumber by graph.settings.smsNumber.collectAsStateWithLifecycle()
+    val experiment by graph.experiment.state.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -196,6 +199,7 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
                 onSaveNumber = graph.settings::setSmsNumber,
             )
         }
+        item { ExperimentCard(experiment, graph.experiment) }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 Column(Modifier.weight(1f)) {
@@ -322,6 +326,76 @@ private fun SmsCard(sms: SmsState, number: String, onEnabled: (Boolean) -> Unit,
             }
         }
     }
+}
+
+/** Field experiments (A10, TRD 2.12): N test SOS at an interval, an echo at the chain's end, CSV out. */
+@Composable
+private fun ExperimentCard(state: ExperimentState, runner: ExperimentRunner) {
+    val context = LocalContext.current
+    var count by rememberSaveable { mutableStateOf("50") }
+    var interval by rememberSaveable { mutableStateOf("10") }
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.exp_title), style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                for (hops in 1..4) {
+                    val label = "hops-$hops"
+                    if (state.label == label) {
+                        Button(onClick = {}) { Text(label) }
+                    } else {
+                        OutlinedButton(onClick = { runner.setLabel(label) }) { Text(label) }
+                    }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.exp_echo), modifier = Modifier.weight(1f))
+                Switch(checked = state.echo, onCheckedChange = runner::setEcho)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = count,
+                    onValueChange = { count = it.filter(Char::isDigit).take(4) },
+                    label = { Text(stringResource(R.string.exp_count)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                )
+                OutlinedTextField(
+                    value = interval,
+                    onValueChange = { interval = it.filter(Char::isDigit).take(3) },
+                    label = { Text(stringResource(R.string.exp_interval)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(stringResource(R.string.exp_status, state.sent, state.target, state.echoes, state.logged))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (state.running) {
+                    OutlinedButton(onClick = runner::stop) { Text(stringResource(R.string.exp_stop)) }
+                } else {
+                    Button(
+                        onClick = { runner.start(count.toIntOrNull()?.coerceIn(1, 500) ?: 50, (interval.toLongOrNull()?.coerceIn(1, 600) ?: 10) * 1000) },
+                    ) { Text(stringResource(R.string.exp_start)) }
+                }
+                OutlinedButton(onClick = { runner.save()?.let { shareCsv(context, it) } }, enabled = state.logged > 0) {
+                    Text(stringResource(R.string.exp_save))
+                }
+                TextButton(onClick = runner::clear, enabled = !state.running) { Text(stringResource(R.string.test_clear_log)) }
+            }
+            state.savedTo?.let { Text(stringResource(R.string.exp_saved, it), style = MaterialTheme.typography.bodySmall) }
+        }
+    }
+}
+
+/** Offers the CSV to any app (Drive, WhatsApp, email); it is also on the phone for adb pull. */
+private fun shareCsv(context: android.content.Context, file: java.io.File) {
+    val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+    val send = android.content.Intent(android.content.Intent.ACTION_SEND)
+        .setType("text/csv")
+        .putExtra(android.content.Intent.EXTRA_STREAM, uri)
+        .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    context.startActivity(android.content.Intent.createChooser(send, file.name))
 }
 
 @Composable

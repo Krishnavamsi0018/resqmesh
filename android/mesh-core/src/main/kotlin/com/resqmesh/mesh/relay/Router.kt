@@ -50,6 +50,11 @@ data class RouterConfig(
     val maxRejected: Int = 2_000,
     /** F-32: SOS relayed per sender key per window. */
     val sosPerSender: Int = 5,
+    /**
+     * Test SOS have their own, larger budget, so a field experiment (50 SOS at 10 s) gets through
+     * while real SOS keep the tight limit. Test SOS never trigger SMS and show as TEST.
+     */
+    val testSosPerSender: Int = 120,
     val sosWindowMs: Long = 10 * 60 * 1000L,
     val pruneEveryMs: Long = 5_000,
     /**
@@ -135,7 +140,7 @@ class Router(
         }
         val key = requireNotNull(PacketKey.of(body))
 
-        if (body is SosBody && !withinRateLimit(body.pk)) {
+        if (body is SosBody && !withinRateLimit(body)) {
             events.onDropped(DropKind.RATE_LIMITED, "sender ${body.pk.take(8)}", from)
             return
         }
@@ -213,11 +218,11 @@ class Router(
         while (seen.size > config.maxSeen) seen.remove(seen.keys.first())
     }
 
-    private fun withinRateLimit(senderKey: String): Boolean {
+    private fun withinRateLimit(sos: SosBody): Boolean {
         val now = clock.nowMillis()
-        val times = recentSos.getOrPut(senderKey) { ArrayDeque() }
+        val times = recentSos.getOrPut(if (sos.test) "test:${sos.pk}" else sos.pk) { ArrayDeque() }
         while (times.isNotEmpty() && now - times.first() >= config.sosWindowMs) times.removeFirst()
-        if (times.size >= config.sosPerSender) return false
+        if (times.size >= if (sos.test) config.testSosPerSender else config.sosPerSender) return false
         times.addLast(now)
         return true
     }

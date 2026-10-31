@@ -1,5 +1,7 @@
 package com.resqmesh.app.mesh
 
+import com.resqmesh.app.experiment.ExperimentEvent
+import com.resqmesh.app.experiment.ExperimentEventKind
 import com.resqmesh.mesh.Clock
 import com.resqmesh.mesh.crypto.NodeId
 import com.resqmesh.mesh.crypto.NodeKeys
@@ -197,6 +199,27 @@ class MeshNodeTest {
 
         assertNull(a.state.mySos.value!!.textedAt)
         assertEquals(LogKind.ERROR, b.state.log.value.first().kind)
+    }
+
+    @Test
+    fun `in an experiment the far phone echoes each test SOS and the sender times the round trip`() {
+        val (a, b, c) = listOf(Phone(1), Phone(2), Phone(3))
+        link(a, b)
+        link(b, c)
+        val events = mutableMapOf<MeshNode, MutableList<ExperimentEvent>>()
+        for (p in listOf(a, b, c)) p.node.onExperimentEvent = { events.getOrPut(p.node) { mutableListOf() } += it }
+        c.node.echoTestSos = true
+
+        val id = a.node.sendTestSos(Category.FLOOD)
+
+        val atC = events.getValue(c.node).first { it.kind == ExperimentEventKind.RECEIVED }
+        assertEquals(id, atC.sosId)
+        assertEquals(2, atC.hops, "radio hops A to B to C")
+        val echo = events.getValue(a.node).single { it.kind == ExperimentEventKind.ECHO_RECEIVED }
+        assertEquals(id, echo.sosId)
+        assertEquals(0L, echo.rttMs, "the test clock stands still")
+        assertEquals(1, events.getValue(b.node).count { it.kind == ExperimentEventKind.TX && it.sosId == id }, "B relayed it once")
+        assertTrue(events.getValue(b.node).none { it.kind == ExperimentEventKind.ECHO_SENT }, "only the far phone echoes")
     }
 
     @Test

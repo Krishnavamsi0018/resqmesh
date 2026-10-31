@@ -191,6 +191,19 @@ class RouterTest {
     }
 
     @Test
+    fun `test SOS have their own budget, so an experiment burst gets through without opening the real limit`() {
+        val (a, b) = List(2) { mesh.phone(it + 1) }
+        mesh.chain(a, b)
+
+        repeat(50) { a.router.originate(a.factory.sos(Category.FLOOD, location = null, test = true)) }
+        repeat(6) { a.router.originate(sos(a)) }
+        mesh.deliverAll()
+
+        assertEquals(55, b.delivered.size, "50 test SOS and 5 real ones")
+        assertEquals(DropKind.RATE_LIMITED, b.dropped.single().first)
+    }
+
+    @Test
     fun `only the SOS sender can cancel it`() {
         val (a, b, mallory) = List(3) { mesh.phone(it + 1) }
         mesh.chain(a, b)
