@@ -27,6 +27,6 @@
     <string name="gateway_no_server">Online, but no server address set below.</string>
     <string name="gateway_error">Online, server not reachable: %1$s</string>
     <string name="gateway_active">Gateway on · uploaded %1$d · waiting %2$d · last contact %3$s</string>
-    <string name="gateway_url">Server address (https://… or http://laptop-ip:8080)</string>
+    <string name="gateway_url">Server address (empty = built-in server)</string>
     <string name="gateway_save">Save</string>
 </resources>

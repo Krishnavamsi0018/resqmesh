@@ -33,13 +33,14 @@ class AppSettings(context: Context) {
     }
 
     private val _serverUrl = MutableStateFlow(prefs.getString(KEY_SERVER_URL, null) ?: BuildConfig.API_BASE_URL)
-    /** The backend a gateway uploads to (F-05 developer option). Empty: this phone is never a gateway. */
+    /** The backend a gateway uploads to (F-05 developer option); the built-in server unless a tester changed it. */
     val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
 
+    /** Saving an empty address goes back to the built-in server. */
     fun setServerUrl(url: String) {
         val clean = url.trim().trimEnd('/')
-        prefs.edit { putString(KEY_SERVER_URL, clean) }
-        _serverUrl.value = clean
+        prefs.edit { if (clean.isEmpty()) remove(KEY_SERVER_URL) else putString(KEY_SERVER_URL, clean) }
+        _serverUrl.value = clean.ifEmpty { BuildConfig.API_BASE_URL }
     }
 
     /** Shows the language screen again (F-01: change it any time). */

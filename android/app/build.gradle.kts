@@ -12,14 +12,14 @@ android {
         applicationId = "com.resqmesh.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.5.0-gateway"
+        versionCode = 9
+        versionName = "0.6.0-online"
 
-        // Public TEST key from shared/test-vectors, so responder acks can be tried before the
-        // backend exists. Week 7 replaces it with the real server key.
-        buildConfigField("String", "SERVER_PUBLIC_KEY", "\"AgvUJ0RrcjQk2A0srTUro982SdDvj6rgyn6yVEOUGyk\"")
-        // Where gateways upload. Empty until the API is deployed (week 7); testers can set it in the Network tab.
-        buildConfigField("String", "API_BASE_URL", "\"\"")
+        // Public half of the server key that signs responder replies (F-31). The private seed is
+        // SERVER_KEY_SEED_HEX on the server only; a new key means a new app release.
+        buildConfigField("String", "SERVER_PUBLIC_KEY", "\"2u5qNe3LJcC0vS4rGDWEWINv_K3TVtto0UlR2p308XA\"")
+        // Where gateways upload: the Render service (render.yaml). Testers can change it in the Network tab.
+        buildConfigField("String", "API_BASE_URL", "\"https://resqmesh-ds0v.onrender.com\"")
     }
 
     buildFeatures {
