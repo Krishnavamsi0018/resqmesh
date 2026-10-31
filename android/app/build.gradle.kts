@@ -14,8 +14,8 @@ android {
         applicationId = "com.resqmesh.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11
-        versionName = "0.8.0-experiments"
+        versionCode = 12
+        versionName = "1.0.0"
 
         // Public half of the server key that signs responder replies (F-31). The private seed is
         // SERVER_KEY_SEED_HEX on the server only; a new key means a new app release.
@@ -45,9 +45,24 @@ android {
         }
     }
 
+    // The release key lives outside the repo; its path and passwords come from local.properties
+    // (resqmesh.release.*), so a build without them simply produces an unsigned release.
+    signingConfigs {
+        val storeFile = localProperty("resqmesh.release.storeFile")
+        if (storeFile.isNotEmpty()) {
+            create("release") {
+                this.storeFile = file(storeFile)
+                storePassword = localProperty("resqmesh.release.storePassword")
+                keyAlias = localProperty("resqmesh.release.keyAlias")
+                keyPassword = localProperty("resqmesh.release.keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 }
