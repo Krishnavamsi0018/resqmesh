@@ -64,6 +64,15 @@ class AppSettings(context: Context) {
         _smsEnabled.value = on
     }
 
+    private val _devMode = MutableStateFlow(prefs.getBoolean(KEY_DEV_MODE, false))
+    /** Hidden developer tools on the Network tab (chain mode, test SOS, experiments, logs). */
+    val devMode: StateFlow<Boolean> = _devMode.asStateFlow()
+
+    fun setDevMode(on: Boolean) {
+        prefs.edit { putBoolean(KEY_DEV_MODE, on) }
+        _devMode.value = on
+    }
+
     /** Shows the language screen again (F-01: change it any time). */
     fun chooseLanguageAgain() {
         prefs.edit { remove(KEY_LANGUAGE) }
@@ -76,5 +85,6 @@ class AppSettings(context: Context) {
         const val KEY_SERVER_URL = "server_url"
         const val KEY_SMS_NUMBER = "sms_number"
         const val KEY_SMS_ENABLED = "sms_enabled"
+        const val KEY_DEV_MODE = "dev_mode"
     }
 }

@@ -95,6 +95,12 @@ class AppGraph(context: Context) {
         transport.setAllowOnly(chain.allowOnly())
     }
 
+    /** Developer mode hides test tools; chain mode is one of them, so it never stays on unseen. */
+    fun setDevMode(on: Boolean) {
+        settings.setDevMode(on)
+        if (!on) setChainMode(false)
+    }
+
     fun setChainMode(on: Boolean) {
         chain.setEnabled(on)
         applyChainMode()

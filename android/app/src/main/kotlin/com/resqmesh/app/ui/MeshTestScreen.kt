@@ -2,6 +2,8 @@ package com.resqmesh.app.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -130,6 +133,8 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
     val sms by graph.state.sms.collectAsStateWithLifecycle()
     val smsNumber by graph.settings.smsNumber.collectAsStateWithLifecycle()
     val experiment by graph.experiment.state.collectAsStateWithLifecycle()
+    val dev by graph.settings.devMode.collectAsStateWithLifecycle()
+    var titleTaps by remember { mutableIntStateOf(0) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -137,7 +142,19 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
-            Text(stringResource(R.string.test_title), style = MaterialTheme.typography.headlineSmall)
+            // Seven taps on the title switch the hidden developer tools on or off.
+            Text(
+                stringResource(if (dev) R.string.test_title else R.string.tab_network),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.clickable(interactionSource = null, indication = null) {
+                    titleTaps += 1
+                    if (titleTaps >= 7) {
+                        titleTaps = 0
+                        graph.setDevMode(!dev)
+                        Toast.makeText(context, if (dev) R.string.dev_off else R.string.dev_on, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
             Text(
                 stringResource(R.string.test_node_id, graph.keys.nodeId.short),
                 style = MaterialTheme.typography.bodyLarge,
@@ -166,7 +183,7 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
                 Text(stringResource(if (running) R.string.test_stop else R.string.test_start))
             }
         }
-        item {
+        if (dev) item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SendButton(stringResource(R.string.test_send_flood), Tokens.CatFlood, running, Modifier.weight(1f)) {
                     graph.node.sendTestSos(Category.FLOOD)
@@ -176,7 +193,7 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
                 }
             }
         }
-        item {
+        if (dev) item {
             Text(
                 stringResource(
                     R.string.test_counts,
@@ -190,17 +207,18 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        item { GatewayCard(gateway, serverUrl, onSave = graph::setServerUrl) }
+        item { GatewayCard(gateway, serverUrl, dev, onSave = graph::setServerUrl) }
         item {
             SmsCard(
                 sms = sms,
                 number = smsNumber,
+                dev = dev,
                 onEnabled = graph.settings::setSmsEnabled,
                 onSaveNumber = graph.settings::setSmsNumber,
             )
         }
-        item { ExperimentCard(experiment, graph.experiment) }
-        item {
+        if (dev) item { ExperimentCard(experiment, graph.experiment) }
+        if (dev) item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.test_chain_title), style = MaterialTheme.typography.titleMedium)
@@ -232,19 +250,19 @@ private fun MeshPanel(graph: AppGraph, locationOn: Boolean, batteryOk: Boolean) 
                 )
             }
         }
-        item {
+        if (dev) item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 Text(stringResource(R.string.test_log), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 TextButton(onClick = graph.state::clearLog) { Text(stringResource(R.string.test_clear_log)) }
             }
         }
-        items(log) { LogRow(it) }
+        if (dev) items(log) { LogRow(it) }
     }
 }
 
 /** Gateway (F-40): the server address, and whether this phone is uploading to it. */
 @Composable
-private fun GatewayCard(gateway: GatewayState, serverUrl: String, onSave: (String) -> Unit) {
+private fun GatewayCard(gateway: GatewayState, serverUrl: String, dev: Boolean, onSave: (String) -> Unit) {
     var draft by rememberSaveable(serverUrl) { mutableStateOf(serverUrl) }
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -261,7 +279,7 @@ private fun GatewayCard(gateway: GatewayState, serverUrl: String, onSave: (Strin
                 )
             }
             Text(status, color = if (gateway.active && gateway.lastError == null) Tokens.StatusNotified else MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(
+            if (dev) OutlinedTextField(
                 value = draft,
                 onValueChange = { draft = it },
                 label = { Text(stringResource(R.string.gateway_url)) },
@@ -269,7 +287,7 @@ private fun GatewayCard(gateway: GatewayState, serverUrl: String, onSave: (Strin
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (draft.trim().trimEnd('/') != serverUrl) {
+            if (dev && draft.trim().trimEnd('/') != serverUrl) {
                 TextButton(onClick = { onSave(draft) }) { Text(stringResource(R.string.gateway_save)) }
             }
         }
@@ -278,7 +296,7 @@ private fun GatewayCard(gateway: GatewayState, serverUrl: String, onSave: (Strin
 
 /** SMS escalation (F-41): the team number, the permission, and whether this phone can text now. */
 @Composable
-private fun SmsCard(sms: SmsState, number: String, onEnabled: (Boolean) -> Unit, onSaveNumber: (String) -> Boolean) {
+private fun SmsCard(sms: SmsState, number: String, dev: Boolean, onEnabled: (Boolean) -> Unit, onSaveNumber: (String) -> Boolean) {
     var draft by rememberSaveable(number) { mutableStateOf(number) }
     var refused by remember { mutableStateOf(false) }
     val askPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -308,7 +326,7 @@ private fun SmsCard(sms: SmsState, number: String, onEnabled: (Boolean) -> Unit,
                     Text(stringResource(R.string.sms_allow))
                 }
             }
-            OutlinedTextField(
+            if (dev) OutlinedTextField(
                 value = draft,
                 onValueChange = {
                     draft = it
@@ -321,7 +339,7 @@ private fun SmsCard(sms: SmsState, number: String, onEnabled: (Boolean) -> Unit,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (SmsPolicy.normalize(draft) != number) {
+            if (dev && SmsPolicy.normalize(draft) != number) {
                 TextButton(onClick = { refused = !onSaveNumber(draft) }) { Text(stringResource(R.string.gateway_save)) }
             }
         }

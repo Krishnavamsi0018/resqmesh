@@ -29,6 +29,8 @@
     <string name="gateway_active">Gateway on · uploaded %1$d · waiting %2$d · last contact %3$s</string>
     <string name="gateway_url">Server address (empty = built-in server)</string>
     <string name="gateway_save">Save</string>
+    <string name="dev_on">Developer tools on</string>
+    <string name="dev_off">Developer tools off</string>
     <string name="exp_title">Field experiment</string>
     <string name="exp_echo">Echo test SOS (turn on only at the far end of the chain)</string>
     <string name="exp_count">Test SOS</string>

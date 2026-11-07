@@ -14,8 +14,8 @@ android {
         applicationId = "com.resqmesh.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12
-        versionName = "1.0.0"
+        versionCode = 13
+        versionName = "1.0.1"
 
         // Public half of the server key that signs responder replies (F-31). The private seed is
         // SERVER_KEY_SEED_HEX on the server only; a new key means a new app release.
